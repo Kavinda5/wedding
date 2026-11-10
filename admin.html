@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>OCTEWYA | Master Studio Operations & Production Portal - Dasun Kavinda</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <link rel="stylesheet" href="style.css?v=2.2">
+  <link rel="stylesheet" href="style.css?v=2.3">
 </head>
 <body>
 
@@ -45,6 +45,9 @@
         <a href="index.html" class="btn-outline-gold" target="_blank" style="padding: 6px 12px; font-size: 12px;" title="Open Public Client Page">
           <i class="fa-solid fa-arrow-up-right-from-square"></i> Client View
         </a>
+        <button type="button" class="btn-outline-light" onclick="adminResetAllBookings()" style="padding: 6px 12px; font-size: 12px; border-radius: 20px; color: #ff6b6b; border-color: rgba(255,107,107,0.4);" title="Clear / Reset All Bookings Data">
+          <i class="fa-solid fa-trash"></i> Reset Data
+        </button>
         <button type="button" class="btn-outline-light" onclick="adminLogout()" style="padding: 6px 12px; font-size: 12px; border-radius: 20px;" title="Lock Studio Admin">
           <i class="fa-solid fa-lock"></i> Lock
         </button>
@@ -302,32 +305,41 @@
           </button>
         </div>
 
-        <!-- Locked Project Banner (Shown when project is complete & accepted) -->
-        <div id="projectLockedBanner" class="project-locked-banner hidden">
-          <div class="locked-left">
-            <i class="fa-solid fa-circle-check"></i>
-            <div>
-              <h3 class="locked-title" data-i18n="completedBadge">PROJECT COMPLETED & DELIVERED</h3>
-              <p class="locked-desc" data-i18n="completedMessage">මෙම මංගල ව්‍යාපෘතිය සාර්ථකව අවසන් කර භාරදී ඇත. වැඩිදුර වෙනස්කම් සඳහා මෙය Lock කර ඇත.</p>
-            </div>
-          </div>
-          <div class="locked-right">
-            <span class="meta-pill status-pill completed-seal"><i class="fa-solid fa-award"></i> Master Video Delivered</span>
-          </div>
+        <!-- Empty Preview Placeholder (Shown when no bookings exist) -->
+        <div id="adminPortalEmptyHint" style="display: none; text-align: center; padding: 70px 20px; color: #888;">
+          <i class="fa-solid fa-camera-retro" style="font-size: 2.8rem; color: var(--gold); margin-bottom: 15px; display: block;"></i>
+          <h3 style="color: #fff; margin-bottom: 8px;">No Bookings Available to Preview</h3>
+          <p>පාරිභෝගිකයෙකු අලුතින් Book කළ පසු හෝ ඔබ Booking එකක් දැමූ පසු මෙහි Client Live Preview එක නැරඹිය හැකිය.</p>
         </div>
-        
-        <!-- Couple Portal Hero Banner -->
-        <div class="portal-hero">
-          <div class="portal-hero-content">
-            <span class="badge-gold"><i class="fa-solid fa-ring"></i> <span data-i18n="portalBadge">OCTEWYA CINEMATOGRAPHY CLIENT PORTAL</span></span>
-            <h1 class="couple-title" id="portalCoupleTitle">Sachini & Dasun</h1>
-            <p class="portal-sub" id="portalPackageSummary">Package 03 + Pre-Shoot + Drone Footage</p>
-            <div class="portal-meta-badges">
-              <span class="meta-pill"><i class="fa-solid fa-location-dot"></i> <span id="portalLocation">Grand Monarch</span></span>
-              <span class="meta-pill"><i class="fa-solid fa-hashtag"></i> Booking ID: <span id="portalBookingId">OCT-2026-001</span></span>
-              <span class="meta-pill status-pill" id="portalStatusPill">Confirmed</span>
+
+        <div id="adminPortalPreviewBody">
+
+          <!-- Locked Project Banner (Shown when project is complete & accepted) -->
+          <div id="projectLockedBanner" class="project-locked-banner hidden">
+            <div class="locked-left">
+              <i class="fa-solid fa-circle-check"></i>
+              <div>
+                <h3 class="locked-title" data-i18n="completedBadge">PROJECT COMPLETED & DELIVERED</h3>
+                <p class="locked-desc" data-i18n="completedMessage">මෙම මංගල ව්‍යාපෘතිය සාර්ථකව අවසන් කර භාරදී ඇත. වැඩිදුර වෙනස්කම් සඳහා මෙය Lock කර ඇත.</p>
+              </div>
+            </div>
+            <div class="locked-right">
+              <span class="meta-pill status-pill completed-seal"><i class="fa-solid fa-award"></i> Master Video Delivered</span>
             </div>
           </div>
+          
+          <!-- Couple Portal Hero Banner -->
+          <div class="portal-hero">
+            <div class="portal-hero-content">
+              <span class="badge-gold"><i class="fa-solid fa-ring"></i> <span data-i18n="portalBadge">OCTEWYA CINEMATOGRAPHY CLIENT PORTAL</span></span>
+              <h1 class="couple-title" id="portalCoupleTitle"></h1>
+              <p class="portal-sub" id="portalPackageSummary"></p>
+              <div class="portal-meta-badges">
+                <span class="meta-pill"><i class="fa-solid fa-location-dot"></i> <span id="portalLocation"></span></span>
+                <span class="meta-pill"><i class="fa-solid fa-hashtag"></i> Booking ID: <span id="portalBookingId"></span></span>
+                <span class="meta-pill status-pill" id="portalStatusPill"></span>
+              </div>
+            </div>
 
           <div class="portal-hero-actions">
             <button class="btn-outline-gold" id="btnEditDetails" onclick="openEditDetailsModal()">
@@ -594,6 +606,8 @@
 
         </div>
 
+        </div> <!-- /adminPortalPreviewBody -->
+
       </div>
     </section>
 
@@ -671,15 +685,6 @@
                   <span data-i18n="totalPackageVal">Total Package Value:</span>
                   <span class="price-val" id="quoteTotalLKR">0 LKR</span>
                 </div>
-                <div class="total-row">
-                  <span data-i18n="advanceToConfirm">Advance to Confirm:</span>
-                  <span class="price-val gold" id="quoteAdvanceLKR">10,000 LKR</span>
-                </div>
-                <div class="total-row">
-                  <span data-i18n="balanceDue">Balance Due (Before Event):</span>
-                  <span class="price-val text-muted" id="quoteBalanceLKR">0 LKR</span>
-                </div>
-                <p class="advance-note" data-i18n="advanceNote">* Advance payment confirms your date and is non-refundable.</p>
               </div>
 
               <!-- Terms & Conditions Agreement -->
@@ -932,6 +937,6 @@
   <script src="terms_content.js"></script>
   <script src="translations.js"></script>
   <script src="docs_generator.js"></script>
-  <script src="app.js?v=2.2"></script>
+  <script src="app.js?v=2.3"></script>
 </body>
 </html>
