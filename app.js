@@ -823,6 +823,14 @@ function updateQuoteSummary() {
 
 function toggleTermsAcceptance(checked) {
   toggleBookingFormState();
+  if (checked && currentSelection.weddingPackage) {
+    const formSec = document.getElementById("bookingFormSection") || document.getElementById("bookingDetailsSection");
+    if (formSec) {
+      setTimeout(() => {
+        formSec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 150);
+    }
+  }
 }
 
 function toggleBookingFormState() {
@@ -835,9 +843,6 @@ function toggleBookingFormState() {
     if (hasPackage && tcAgreed) {
       btn.removeAttribute("disabled");
       btn.classList.add("ready");
-    } else if (hasPackage) {
-      btn.removeAttribute("disabled"); // Keep clickable so it guides the user
-      btn.classList.remove("ready");
     } else {
       btn.setAttribute("disabled", "true");
       btn.classList.remove("ready");
@@ -846,7 +851,7 @@ function toggleBookingFormState() {
 
   const formSec = document.getElementById("bookingFormSection") || document.getElementById("bookingDetailsSection");
   if (formSec) {
-    if (hasPackage) {
+    if (hasPackage && tcAgreed) {
       formSec.style.display = "block";
       formSec.classList.remove("hidden");
     } else {
@@ -866,16 +871,17 @@ function scrollToBookingForm() {
     return;
   }
 
+  if (!tcAgreed) {
+    showToast("Terms & Conditions", currentLang === 'si' ? "කරුණාකර නියමයන් සහ කොන්දේසි (Terms) එකඟ වීමට ටික් කරන්න." : "Please tick the Terms & Conditions checkbox.");
+    tcCheck?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
+
   const formSec = document.getElementById("bookingFormSection") || document.getElementById("bookingDetailsSection");
   if (formSec) {
     formSec.style.display = "block";
     formSec.classList.remove("hidden");
-    formSec.scrollIntoView({ behavior: 'smooth' });
-  }
-
-  if (!tcAgreed) {
-    showToast("Terms & Conditions", currentLang === 'si' ? "කරුණාකර නියමයන් සහ කොන්දේසි (Terms) එකඟ වීමට ටික් කරන්න." : "Please tick the Terms & Conditions checkbox.");
-    tcCheck?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    formSec.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 }
 
@@ -1831,6 +1837,14 @@ function acceptTermsFromModal() {
   if (chk) chk.checked = true;
   toggleBookingFormState();
   closeTermsModal();
+  if (currentSelection.weddingPackage) {
+    const formSec = document.getElementById("bookingFormSection") || document.getElementById("bookingDetailsSection");
+    if (formSec) {
+      setTimeout(() => {
+        formSec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 200);
+    }
+  }
 }
 
 function rejectTerms() {
