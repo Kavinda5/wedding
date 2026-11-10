@@ -815,8 +815,10 @@ function recalculateQuoteFromAdvance(val) {
 }
 
 function updateQuoteSummary() {
-  const itemsList = document.getElementById("quoteItemsList");
+  const itemsList = document.getElementById("quoteBreakdownList") || document.getElementById("quoteItemsList");
   if (!itemsList) return;
+
+  const emptyHint = document.getElementById("quoteEmptyHint");
 
   let total = 0;
   const items = [];
@@ -843,12 +845,14 @@ function updateQuoteSummary() {
   });
 
   if (items.length === 0) {
-    itemsList.innerHTML = `<div class="empty-quote">${currentLang === 'si' ? 'කරුණාකර පැකේජයක් තෝරන්න' : 'Please select a wedding package'}</div>`;
+    if (emptyHint) emptyHint.style.display = "block";
+    itemsList.innerHTML = `<div class="quote-empty">${currentLang === 'si' ? 'කරුණාකර පැකේජයක් තෝරන්න' : 'Please select a wedding package'}</div>`;
   } else {
+    if (emptyHint) emptyHint.style.display = "none";
     itemsList.innerHTML = items.map(it => `
-      <div class="quote-item">
-        <span>${it.name}</span>
-        <span class="price-val">${formatLKR(it.price)} LKR</span>
+      <div class="quote-item" style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 13px;">
+        <span style="color: #fff;">${it.name}</span>
+        <span class="price-val" style="color: var(--gold); font-weight: 700;">${formatLKR(it.price)} LKR</span>
       </div>
     `).join("");
   }
@@ -856,34 +860,59 @@ function updateQuoteSummary() {
   const advance = currentSelection.customAdvance || 10000;
   const balance = total > 0 ? Math.max(0, total - advance) : 0;
 
-  document.getElementById("quoteTotal").textContent = `${formatLKR(total)} LKR`;
-  document.getElementById("quoteAdvance").textContent = `${formatLKR(advance)} LKR`;
-  document.getElementById("quoteBalance").textContent = `${formatLKR(balance)} LKR`;
+  const totalEl = document.getElementById("quoteTotalLKR") || document.getElementById("quoteTotal");
+  const advanceEl = document.getElementById("quoteAdvanceLKR") || document.getElementById("quoteAdvance");
+  const balanceEl = document.getElementById("quoteBalanceLKR") || document.getElementById("quoteBalance");
+
+  if (totalEl) totalEl.textContent = `${formatLKR(total)} LKR`;
+  if (advanceEl) advanceEl.textContent = `${formatLKR(advance)} LKR`;
+  if (balanceEl) balanceEl.textContent = `${formatLKR(balance)} LKR`;
 
   // Dynamic show/hide
   const hcGroup = document.getElementById("homecomingDateGroup");
-  if (hcGroup) hcGroup.style.display = currentSelection.homecomingPackage ? "flex" : "none";
+  if (hcGroup) hcGroup.style.display = currentSelection.homecomingPackage ? "block" : "none";
 
-  const psGroup = document.getElementById("preshootDateGroup");
-  if (psGroup) psGroup.style.display = currentSelection.preshootPackage ? "block" : "none";
+  const psNotice = document.getElementById("preshootDate");
+  if (psNotice && psNotice.closest('.form-group')) {
+    psNotice.closest('.form-group').style.display = currentSelection.preshootPackage ? "block" : "none";
+  }
+
+  toggleBookingFormState();
+}
+
+function toggleTermsAcceptance(checked) {
+  toggleBookingFormState();
 }
 
 function toggleBookingFormState() {
-  const tcAgreed = document.getElementById("tcCheck")?.checked;
+  const tcCheck = document.getElementById("termsCheck") || document.getElementById("tcCheck");
+  const tcAgreed = tcCheck ? tcCheck.checked : false;
   const hasPackage = !!currentSelection.weddingPackage;
   const btn = document.getElementById("btnProceedBooking");
 
-  if (btn) btn.disabled = !(tcAgreed && hasPackage);
+  if (btn) {
+    btn.disabled = !(tcAgreed && hasPackage);
+  }
 
-  const formSec = document.getElementById("bookingDetailsSection");
+  const formSec = document.getElementById("bookingFormSection") || document.getElementById("bookingDetailsSection");
   if (formSec) {
-    if (tcAgreed && hasPackage) formSec.classList.remove("hidden");
-    else formSec.classList.add("hidden");
+    if (tcAgreed && hasPackage) {
+      formSec.style.display = "block";
+      formSec.classList.remove("hidden");
+    } else {
+      formSec.style.display = "none";
+      formSec.classList.add("hidden");
+    }
   }
 }
 
 function scrollToBookingForm() {
-  document.getElementById("bookingDetailsSection")?.scrollIntoView({ behavior: 'smooth' });
+  const formSec = document.getElementById("bookingFormSection") || document.getElementById("bookingDetailsSection");
+  if (formSec) {
+    formSec.style.display = "block";
+    formSec.classList.remove("hidden");
+    formSec.scrollIntoView({ behavior: 'smooth' });
+  }
 }
 
 // Slip Upload
@@ -1756,14 +1785,14 @@ function closeTermsModal() {
 }
 
 function acceptTermsFromModal() {
-  const chk = document.getElementById("tcCheck");
+  const chk = document.getElementById("termsCheck") || document.getElementById("tcCheck");
   if (chk) chk.checked = true;
   toggleBookingFormState();
   closeTermsModal();
 }
 
 function rejectTerms() {
-  const chk = document.getElementById("tcCheck");
+  const chk = document.getElementById("termsCheck") || document.getElementById("tcCheck");
   if (chk) chk.checked = false;
   toggleBookingFormState();
   closeTermsModal();
