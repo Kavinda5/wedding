@@ -294,6 +294,7 @@ function adminLogout() {
 
 document.addEventListener("DOMContentLoaded", () => {
   loadDataFromStorage();
+  initCloudSync();
   applyLanguage(currentLang);
   checkAdminAuth();
 
@@ -475,6 +476,81 @@ function searchClientWedding(e) {
   }
 }
 
+// ==========================================
+// 3. CLOUD DATABASE SYNC (GOOGLE FIREBASE)
+// ==========================================
+
+function isFirebaseReady() {
+  return typeof firestoreDb !== "undefined" && firestoreDb !== null;
+}
+
+function updateCloudStatusBadge() {
+  const badge = document.getElementById("cloudStatusBadge");
+  const text = document.getElementById("cloudStatusText");
+  if (!badge || !text) return;
+
+  if (isFirebaseReady()) {
+    badge.style.background = "rgba(40, 167, 69, 0.18)";
+    badge.style.color = "#28a745";
+    badge.style.borderColor = "rgba(40, 167, 69, 0.4)";
+    badge.title = "Google Firebase Cloud Database Connected! (Real-time active)";
+    badge.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> <span>Cloud Live</span>`;
+  } else {
+    badge.style.background = "rgba(255, 193, 7, 0.15)";
+    badge.style.color = "#ffc107";
+    badge.style.borderColor = "rgba(255, 193, 7, 0.3)";
+    badge.title = "Browser Local Storage (Paste Firebase keys in firebase-config.js for Cloud Sync)";
+    badge.innerHTML = `<i class="fa-solid fa-cloud"></i> <span>Local Mode</span>`;
+  }
+}
+
+function syncBookingToCloud(booking) {
+  if (!isFirebaseReady() || !booking || !booking.id) return;
+  try {
+    firestoreDb.collection("octewya_bookings").doc(booking.id).set(booking, { merge: true })
+      .then(() => {
+        console.log("OCTEWYA Cloud Sync: Saved", booking.id);
+      })
+      .catch(err => {
+        console.warn("OCTEWYA Cloud Sync Error:", err);
+      });
+  } catch (err) {
+    console.warn("OCTEWYA Cloud Sync Exception:", err);
+  }
+}
+
+function initCloudSync() {
+  updateCloudStatusBadge();
+  if (!isFirebaseReady()) return;
+
+  firestoreDb.collection("octewya_bookings")
+    .onSnapshot((snapshot) => {
+      const cloudList = [];
+      snapshot.forEach(doc => {
+        cloudList.push(doc.data());
+      });
+
+      cloudList.sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
+
+      if (cloudList.length > 0 || (snapshot.metadata && !snapshot.metadata.hasPendingWrites)) {
+        allBookings = cloudList;
+        localStorage.setItem(STORAGE_KEY_BOOKINGS, JSON.stringify(allBookings));
+
+        const isAdminTable = document.getElementById("adminBookingsTableBody");
+        if (isAdminTable) {
+          loadAdminData();
+          populateMasterCoupleSelector();
+        }
+
+        if (currentBookingId) {
+          loadPortalData(currentBookingId);
+        }
+      }
+    }, (error) => {
+      console.warn("Firestore onSnapshot error:", error);
+    });
+}
+
 function loadDataFromStorage() {
   const stored = localStorage.getItem(STORAGE_KEY_BOOKINGS);
   if (stored) {
@@ -485,12 +561,17 @@ function loadDataFromStorage() {
     }
   } else {
     allBookings = DEFAULT_BOOKINGS;
-    saveDataToStorage();
   }
 }
 
-function saveDataToStorage() {
+function saveDataToStorage(bookingToSync) {
   localStorage.setItem(STORAGE_KEY_BOOKINGS, JSON.stringify(allBookings));
+  if (bookingToSync) {
+    syncBookingToCloud(bookingToSync);
+  } else {
+    const active = getActiveBooking();
+    if (active) syncBookingToCloud(active);
+  }
 }
 
 function getActiveBooking() {
@@ -885,20 +966,47 @@ function scrollToBookingForm() {
   }
 }
 
-// Slip Upload
+// Slip Upload & Safe Cloud Image Compression (Limits under ~80KB)
+function compressImage(file, maxWidth, quality, callback) {
+  const reader = new FileReader();
+  reader.onload = function(evt) {
+    const img = new Image();
+    img.onload = function() {
+      let w = img.width;
+      let h = img.height;
+      if (w > maxWidth) {
+        h = Math.round((h * maxWidth) / w);
+        w = maxWidth;
+      }
+      const canvas = document.createElement("canvas");
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0, w, h);
+      const compressedUrl = canvas.toDataURL("image/jpeg", quality);
+      callback(compressedUrl);
+    };
+    img.onerror = function() {
+      callback(evt.target.result);
+    };
+    img.src = evt.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
 function previewBankSlip(e) {
   const file = e.target.files[0];
   if (!file) return;
 
-  const reader = new FileReader();
-  reader.onload = function(evt) {
-    currentSelection.bankSlipData = evt.target.result;
-    document.getElementById("slipPreviewImg").src = evt.target.result;
-    document.getElementById("slipFileName").textContent = file.name;
-    document.getElementById("slipPreviewContainer").classList.remove("hidden");
-    document.getElementById("slipUploadArea").classList.add("hidden");
-  };
-  reader.readAsDataURL(file);
+  compressImage(file, 900, 0.75, function(compressedData) {
+    currentSelection.bankSlipData = compressedData;
+    const previewImg = document.getElementById("slipPreviewImg");
+    if (previewImg) previewImg.src = compressedData;
+    const fileName = document.getElementById("slipFileName");
+    if (fileName) fileName.textContent = file.name;
+    document.getElementById("slipPreviewContainer")?.classList.remove("hidden");
+    document.getElementById("slipUploadArea")?.classList.add("hidden");
+  });
 }
 
 function removeBankSlip() {
@@ -982,7 +1090,7 @@ function handleBookingSubmit(e) {
   };
 
   allBookings.unshift(newBooking);
-  saveDataToStorage();
+  saveDataToStorage(newBooking);
 
   if (document.getElementById("masterCoupleSelector")) {
     populateMasterCoupleSelector();
@@ -1385,9 +1493,16 @@ function adminResetAllBookings() {
     ? "ඔබට සියලුම Booking දත්ත සම්පූර්ණයෙන්ම Clear කිරීමට අවශ්‍යද? (මෙය නැවත ලබාගත නොහැක)"
     : "Are you sure you want to clear ALL bookings data? This cannot be undone.";
   if (confirm(confirmMsg)) {
+    if (isFirebaseReady()) {
+      firestoreDb.collection("octewya_bookings").get().then(snapshot => {
+        const batch = firestoreDb.batch();
+        snapshot.forEach(doc => batch.delete(doc.ref));
+        return batch.commit();
+      }).catch(err => console.warn("Cloud clear error:", err));
+    }
     allBookings = [];
     currentBookingId = "";
-    saveDataToStorage();
+    localStorage.setItem(STORAGE_KEY_BOOKINGS, JSON.stringify(allBookings));
     loadAdminData();
     populateMasterCoupleSelector();
     showToast(

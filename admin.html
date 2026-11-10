@@ -33,6 +33,11 @@
       </div>
 
       <div class="header-right" style="display: flex; gap: 10px; align-items: center;">
+        <!-- Cloud Sync Status Badge -->
+        <div id="cloudStatusBadge" style="display: flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; background: rgba(255,193,7,0.15); color: #ffc107; border: 1px solid rgba(255,193,7,0.3);" title="Google Firebase Realtime Sync Status">
+          <i class="fa-solid fa-cloud"></i> <span id="cloudStatusText">Local Mode</span>
+        </div>
+
         <!-- Language Switcher [ EN | සිංහල ] -->
         <div class="lang-switcher">
           <button type="button" class="lang-btn" id="langBtnEn" onclick="switchLanguage('en')">EN</button>
@@ -937,6 +942,10 @@
   <script src="terms_content.js"></script>
   <script src="translations.js"></script>
   <script src="docs_generator.js"></script>
-  <script src="app.js?v=2.4"></script>
+  <!-- Google Firebase Realtime Cloud Database SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  <script src="firebase-config.js?v=1.0"></script>
+  <script src="app.js?v=2.5"></script>
 </body>
 </html>
