@@ -1530,6 +1530,48 @@ input:checked + .slider:before { transform: translateX(22px); background-color: 
 .slip-zoom-card { max-width: 800px; padding: 18px; }
 .slip-zoom-card img { width: 100%; height: auto; border-radius: var(--radius-sm); }
 
+.btn-proceed {
+  width: 100%;
+  margin-top: 15px;
+  background: linear-gradient(135deg, #F6E7B9 0%, #D4AF37 50%, #B88915 100%);
+  color: #000;
+  border: none;
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 14px;
+  padding: 14px 20px;
+  border-radius: 30px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 18px rgba(212, 175, 55, 0.35);
+}
+
+.btn-proceed:disabled {
+  background: #252530 !important;
+  color: #777 !important;
+  cursor: not-allowed !important;
+  box-shadow: none !important;
+  opacity: 0.55 !important;
+  transform: none !important;
+}
+
+.btn-proceed.ready {
+  background: linear-gradient(135deg, #F6E7B9 0%, #D4AF37 50%, #B88915 100%) !important;
+  color: #000 !important;
+  box-shadow: 0 4px 22px rgba(212, 175, 55, 0.5) !important;
+  cursor: pointer !important;
+  opacity: 1 !important;
+}
+
+.btn-proceed:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 25px rgba(212, 175, 55, 0.55);
+}
+
 /* Responsive */
 @media (max-width: 1024px) {
   .booking-layout, .admin-management-grid { grid-template-columns: 1fr; }

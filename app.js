@@ -891,12 +891,21 @@ function toggleBookingFormState() {
   const btn = document.getElementById("btnProceedBooking");
 
   if (btn) {
-    btn.disabled = !(tcAgreed && hasPackage);
+    if (hasPackage && tcAgreed) {
+      btn.removeAttribute("disabled");
+      btn.classList.add("ready");
+    } else if (hasPackage) {
+      btn.removeAttribute("disabled"); // Keep clickable so it guides the user
+      btn.classList.remove("ready");
+    } else {
+      btn.setAttribute("disabled", "true");
+      btn.classList.remove("ready");
+    }
   }
 
   const formSec = document.getElementById("bookingFormSection") || document.getElementById("bookingDetailsSection");
   if (formSec) {
-    if (tcAgreed && hasPackage) {
+    if (hasPackage) {
       formSec.style.display = "block";
       formSec.classList.remove("hidden");
     } else {
@@ -907,11 +916,25 @@ function toggleBookingFormState() {
 }
 
 function scrollToBookingForm() {
+  const hasPackage = !!currentSelection.weddingPackage;
+  const tcCheck = document.getElementById("termsCheck") || document.getElementById("tcCheck");
+  const tcAgreed = tcCheck ? tcCheck.checked : false;
+
+  if (!hasPackage) {
+    showToast("දැනුම්දීම", currentLang === 'si' ? "කරුණාකර ප්‍රධාන මංගල පැකේජයක් තෝරන්න." : "Please select a wedding package first.");
+    return;
+  }
+
   const formSec = document.getElementById("bookingFormSection") || document.getElementById("bookingDetailsSection");
   if (formSec) {
     formSec.style.display = "block";
     formSec.classList.remove("hidden");
     formSec.scrollIntoView({ behavior: 'smooth' });
+  }
+
+  if (!tcAgreed) {
+    showToast("Terms & Conditions", currentLang === 'si' ? "කරුණාකර නියමයන් සහ කොන්දේසි (Terms) එකඟ වීමට ටික් කරන්න." : "Please tick the Terms & Conditions checkbox.");
+    tcCheck?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
 }
 
