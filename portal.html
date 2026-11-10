@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OCTEWYA | Client Portal - Live Wedding Production Tracker</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Top Navigation Bar for Couple (NO Admin Tabs!) -->
+  <header class="studio-header">
+    <div class="header-container">
+      <div class="brand-box">
+        <img src="w.png" alt="OCTEWYA Logo" class="brand-logo" onerror="this.src='B.jpg'">
+        <div class="brand-text">
+          <span class="sub-brand" data-i18n="subBrand">DASUN KAVINDA CINEMATOGRAPHY</span>
+        </div>
+      </div>
+
+      <div class="header-right" style="display: flex; gap: 10px; align-items: center;">
+        <a href="index.html" class="btn-outline-gold" style="padding: 6px 12px; font-size: 12px;">
+          <i class="fa-solid fa-box-archive"></i> <span data-i18n="navPackages">Packages & Booking</span>
+        </a>
+        <!-- Language Switcher [ EN | සිංහල ] -->
+        <div class="lang-switcher">
+          <button type="button" class="lang-btn" id="langBtnEn" onclick="switchLanguage('en')">EN</button>
+          <button type="button" class="lang-btn active" id="langBtnSi" onclick="switchLanguage('si')">සිංහල</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Live Toast Notification -->
+  <div id="liveToast" class="live-toast hidden">
+    <div class="toast-icon"><i class="fa-solid fa-bell"></i></div>
+    <div class="toast-content">
+      <h4 id="toastTitle">Notification</h4>
+      <p id="toastMessage">Update details here...</p>
+    </div>
+    <button class="toast-close" onclick="closeToast()">&times;</button>
+  </div>
+
+  <main class="main-content">
+    <div class="portal-container">
+
+      <!-- Locked Project Banner (Shown when project is complete & accepted) -->
+      <div id="projectLockedBanner" class="project-locked-banner hidden">
+        <div class="locked-left">
+          <i class="fa-solid fa-circle-check"></i>
+          <div>
+            <h3 class="locked-title" data-i18n="completedBadge">PROJECT COMPLETED & DELIVERED</h3>
+            <p class="locked-desc" data-i18n="completedMessage">මෙම මංගල ව්‍යාපෘතිය සාර්ථකව අවසන් කර භාරදී ඇත. වැඩිදුර වෙනස්කම් සඳහා මෙය Lock කර ඇත.</p>
+          </div>
+        </div>
+        <div class="locked-right">
+          <span class="meta-pill status-pill completed-seal"><i class="fa-solid fa-award"></i> Master Video Delivered</span>
+        </div>
+      </div>
+      
+      <!-- Couple Portal Hero Banner -->
+      <div class="portal-hero">
+        <div class="portal-hero-content">
+          <span class="badge-gold"><i class="fa-solid fa-ring"></i> <span data-i18n="portalBadge">OCTEWYA CINEMATOGRAPHY CLIENT PORTAL</span></span>
+          <h1 class="couple-title" id="portalCoupleTitle">Sachini & Dasun</h1>
+          <p class="portal-sub" id="portalPackageSummary">Package 03 + Pre-Shoot + Drone Footage</p>
+          <div class="portal-meta-badges">
+            <span class="meta-pill"><i class="fa-solid fa-location-dot"></i> <span id="portalLocation">Grand Monarch</span></span>
+            <span class="meta-pill"><i class="fa-solid fa-hashtag"></i> Booking ID: <span id="portalBookingId">OCT-2026-001</span></span>
+            <span class="meta-pill status-pill" id="portalStatusPill">Confirmed</span>
+          </div>
+        </div>
+
+        <div class="portal-hero-actions">
+          <button class="btn-outline-gold" id="btnEditDetails" onclick="openEditDetailsModal()">
+            <i class="fa-solid fa-pen-to-square"></i> <span data-i18n="btnChangeDates">Change Dates / Package</span>
+          </button>
+          <button class="btn-whatsapp-outline" onclick="openDirectWhatsApp()">
+            <i class="fa-brands fa-whatsapp"></i> <span data-i18n="btnChatDasun">Chat with Dasun</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- COUNTDOWN TIMERS -->
+      <div class="countdown-grid">
+        <!-- Wedding Countdown -->
+        <div class="countdown-card wedding-card">
+          <div class="card-header">
+            <i class="fa-solid fa-champagne-glasses card-icon"></i>
+            <div>
+              <h3 data-i18n="wdCountdownTitle">Wedding Day Countdown</h3>
+              <span class="date-highlight" id="portalWeddingDateFormatted">April 28, 2026</span>
+            </div>
+          </div>
+          <div class="timer-digits">
+            <div class="digit-box"><span class="number" id="wdDays">00</span><span class="label" data-i18n="days">Days</span></div>
+            <div class="digit-box"><span class="number" id="wdHours">00</span><span class="label" data-i18n="hours">Hours</span></div>
+            <div class="digit-box"><span class="number" id="wdMins">00</span><span class="label" data-i18n="mins">Mins</span></div>
+            <div class="digit-box"><span class="number" id="wdSecs">00</span><span class="label" data-i18n="secs">Secs</span></div>
+          </div>
+        </div>
+
+        <!-- Pre-Shoot Countdown (If exists) -->
+        <div class="countdown-card preshoot-card" id="preshootCountdownBox" style="display: none;">
+          <div class="card-header">
+            <i class="fa-solid fa-video card-icon"></i>
+            <div>
+              <h3 data-i18n="psCountdownTitle">Pre-Shoot Countdown</h3>
+              <span class="date-highlight" id="portalPreshootDateFormatted">March 15, 2026</span>
+            </div>
+          </div>
+          <div class="timer-digits">
+            <div class="digit-box"><span class="number" id="psDays">00</span><span class="label" data-i18n="days">Days</span></div>
+            <div class="digit-box"><span class="number" id="psHours">00</span><span class="label" data-i18n="hours">Hours</span></div>
+            <div class="digit-box"><span class="number" id="psMins">00</span><span class="label" data-i18n="mins">Mins</span></div>
+            <div class="digit-box"><span class="number" id="psSecs">00</span><span class="label" data-i18n="secs">Secs</span></div>
+          </div>
+          <div class="preshoot-edit-hint" id="psEditHint" onclick="openEditDetailsModal()">
+            <i class="fa-solid fa-calendar-pen"></i> <span data-i18n="psEditHint">දිනය හෝ ස්ථානය වෙනස් කිරීමට ක්ලික් කරන්න</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- PAYMENT STATUS & URGENT ALERT BANNER -->
+      <div id="paymentAlertContainer">
+        <!-- Dynamically rendered if payment is due close to wedding -->
+      </div>
+
+      <div class="booking-layout mt-4">
+        <!-- Left: Financial & Package Breakdown -->
+        <div class="portal-card">
+          <h3 class="portal-card-title"><i class="fa-solid fa-receipt"></i> <span data-i18n="paymentTitle">Payment & Package Overview</span></h3>
+          
+          <div class="total-row highlight mt-3">
+            <span data-i18n="totalAmount">Total Amount:</span>
+            <span class="price-val" id="portalTotalAmount">150,000 LKR</span>
+          </div>
+
+          <div class="quote-totals mt-2">
+            <div class="total-row">
+              <span data-i18n="advancePaid">Advance Paid:</span>
+              <span class="price-val" id="portalAdvancePaid" style="color: var(--accent-green);">10,000 LKR</span>
+            </div>
+            <div class="total-row highlight" id="balanceMetricBox">
+              <span data-i18n="balanceMetric">Balance Due:</span>
+              <span class="price-val gold" id="portalBalanceDue">140,000 LKR</span>
+            </div>
+          </div>
+
+          <div class="package-breakdown-details mt-4">
+            <h4 data-i18n="packageItemsTitle">Package Items Selected:</h4>
+            <ul class="breakdown-list" id="portalPackageItemsList">
+              <!-- Items list -->
+            </ul>
+          </div>
+
+          <div class="payment-policy-box mt-3">
+            <i class="fa-solid fa-shield-halved"></i>
+            <div>
+              <strong data-i18n="paymentPolicyTitle">Payment Policy:</strong>
+              <p data-i18n="paymentPolicyText">Full payment must be made at least 3 days before the event. Bank transfers are preferred.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Super Fast Delivery Card (Shown conditionally) -->
+        <div class="portal-card" id="expressDeliveryCard" style="display: none;">
+          <div class="express-badge" data-i18n="vipExpressBadge">VIP EXPRESS DELIVERY</div>
+          <h3 class="portal-card-title gold" data-i18n="superFastTitle">Super Fast Premiere Delivery</h3>
+          <p class="express-desc" data-i18n="superFastDesc">
+            ඔබගේ මංගල වීඩියෝව සුවිශේෂී ලෙස <strong>දින 2ක් හෝ 3ක් ඇතුළත</strong> සම්පූර්ණයෙන්ම සකසා ලබාගැනීමට කැමතිද?
+          </p>
+          <div class="express-offer-box" id="expressOfferDetails">
+            <!-- Dynamic pricing -->
+          </div>
+          <div class="express-actions mt-3">
+            <button class="btn-primary-gold w-100" onclick="acceptExpressDelivery()">
+              <i class="fa-solid fa-bolt-lightning"></i> <span data-i18n="btnAcceptExpress">Yes, I Want Super Fast Delivery</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================== -->
+      <!-- POST-PRODUCTION PROGRESS TRACKERS -->
+      <!-- ============================================== -->
+      
+      <!-- Pre-Shoot Production Tracker -->
+      <div class="portal-card mt-4" id="preshootTrackerCard" style="display: none;">
+        <div class="tracker-header">
+          <div>
+            <span class="tag-outline"><i class="fa-solid fa-video"></i> PRE-SHOOT PRODUCTION</span>
+            <h3 class="portal-card-title" data-i18n="psTrackerTitle">Pre-Shoot Video Editing Progress</h3>
+            <p class="tracker-sub" data-i18n="trackerSub">අප කණ්ඩායම විසින් සෑම පියවරක්ම සම්පූර්ණ කළ පසු මෙහි සජීවීව දැකගත හැක.</p>
+          </div>
+          <div class="tracker-overall-badge" id="psOverallBadge">Not Started</div>
+        </div>
+
+        <div class="pipeline-stepper" id="preshootStepper">
+          <!-- 6 Stages -->
+        </div>
+      </div>
+
+      <!-- Wedding Day Production Tracker -->
+      <div class="portal-card mt-4" id="weddingTrackerCard">
+        <div class="tracker-header">
+          <div>
+            <span class="tag-outline"><i class="fa-solid fa-film"></i> WEDDING FILM PRODUCTION</span>
+            <h3 class="portal-card-title" data-i18n="wdTrackerTitle">Wedding Video Post-Production Progress</h3>
+            <p class="tracker-sub" data-i18n="trackerSub">අප කණ්ඩායම විසින් සෑම පියවරක්ම සම්පූර්ණ කළ පසු මෙහි සජීවීව දැකගත හැක.</p>
+          </div>
+          <div class="tracker-overall-badge" id="wdOverallBadge">Pending Event</div>
+        </div>
+
+        <div class="pipeline-stepper" id="weddingStepper">
+          <!-- 6 Stages with Dimmed / Active States -->
+        </div>
+      </div>
+
+      <!-- ============================================== -->
+      <!-- DELIVERY SELECTION, SAFETY, REVISIONS & REVIEW -->
+      <!-- ============================================== -->
+      <div id="postCompletionSection" class="portal-card mt-4" style="display: none;">
+        
+        <!-- STEP 7: DELIVERY METHOD SELECTION -->
+        <div class="delivery-section">
+          <div class="section-badge-gold" data-i18n="deliveryStepTitle">STEP 7: VIDEO DELIVERY PREFERENCE</div>
+          <h3 class="portal-card-title" data-i18n="deliverySubTitle">වීඩියෝව ලබාගැනීමට කැමති ආකාරය තෝරන්න</h3>
+          
+          <div class="delivery-options-grid mt-3">
+            <label class="delivery-card" id="optionCloudDrive">
+              <input type="radio" name="deliveryMethod" value="cloud" onchange="handleDeliveryChange(this.value)">
+              <div class="delivery-card-inner">
+                <i class="fa-solid fa-cloud-arrow-down icon"></i>
+                <h4 data-i18n="cloudTitle">Google Cloud Drive (Online)</h4>
+                <p data-i18n="cloudDesc">4K / 1080p Master Video Files කෙලින්ම Google Drive මඟින් බාගත (Download) කරගත හැක.</p>
+                <span class="pill-badge">Instant Access</span>
+              </div>
+            </label>
+
+            <label class="delivery-card" id="optionUsbStudio">
+              <input type="radio" name="deliveryMethod" value="usb_studio" onchange="handleDeliveryChange(this.value)">
+              <div class="delivery-card-inner">
+                <i class="fa-solid fa-store icon"></i>
+                <h4 data-i18n="usbStudioTitle">USB Pen Drive - Studio Pickup</h4>
+                <p data-i18n="usbStudioDesc">ඇහැලියගොඩ පිහිටි OCTEWYA Studio වෙත පැමිණ ආරක්ෂිත USB Pen Drive එක ලබාගත හැක.</p>
+                <span class="pill-badge">Eheliyagoda</span>
+              </div>
+            </label>
+
+            <label class="delivery-card" id="optionUsbCourier">
+              <input type="radio" name="deliveryMethod" value="usb_courier" onchange="handleDeliveryChange(this.value)">
+              <div class="delivery-card-inner">
+                <i class="fa-solid fa-truck-fast icon"></i>
+                <h4 data-i18n="usbCourierTitle">USB Pen Drive - Courier Delivery</h4>
+                <p data-i18n="usbCourierDesc">ඔබගේ නිවසටම ලියාපදිංචි කුරියර් සේවාව මඟින් ආරක්ෂිතව ගෙන්වා ගන්න.</p>
+                <span class="pill-badge">Island-wide</span>
+              </div>
+            </label>
+          </div>
+
+          <!-- Courier Address Input -->
+          <div id="courierAddressBox" class="courier-address-box mt-3" style="display: none;">
+            <label data-i18n="courierAddrLabel">Delivery Address & Landmark (කුරියර් භාරදිය යුතු ලිපිනය) *</label>
+            <textarea id="courierAddress" rows="2" placeholder="ලිපිනය, නගරය සහ දුරකථන අංකය..."></textarea>
+            <button class="btn-primary-gold mt-2" onclick="saveCourierAddress()" data-i18n="btnSaveAddr">Save Delivery Address</button>
+          </div>
+
+          <!-- REDESIGNED & FIXED CRITICAL SAFETY NOTICE (No fragmented columns!) -->
+          <div class="safety-guidelines-box mt-4">
+            <div class="guideline-header">
+              <i class="fa-solid fa-shield-halved" style="font-size: 22px;"></i>
+              <h4 data-i18n="safetyTitle">වීඩියෝව සුරක්ෂිතව තබාගැනීම සඳහා විශේෂ උපදෙස්</h4>
+            </div>
+            
+            <ul class="guidelines-list">
+              <li><i class="fa-solid fa-circle-check"></i> <span data-i18n="safeRule1">වීඩියෝව ලැබුණු වහාම ඔබගේ පුද්ගලික පරිගණකයක හෝ Cloud Drive එකක Backup පිටපතක් තබාගන්න.</span></li>
+              <li><i class="fa-solid fa-circle-check"></i> <span data-i18n="safeRule2">Pen Drive එක දිගුකාලීන ගබඩා මාධ්‍යයක් ලෙස පමණක් විශ්වාසය නොතබා Hard Drive එකක සුරකින්න.</span></li>
+            </ul>
+
+            <!-- Clean High-Contrast Red Warning Banner -->
+            <div class="critical-red-banner">
+              <div class="critical-banner-header">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <span data-i18n="criticalRuleTitle">CRITICAL 1-MONTH COLLECTION NOTICE:</span>
+              </div>
+              <p class="critical-banner-text" data-i18n="criticalRuleText">
+                වීඩියෝව සූදානම් කළ බව දැනුම් දී මාසයක් (දින 30ක්) ඇතුළත ලබාගත යුතුය. මාසයකට පසුව Studio එක සතුව පවතින footage සහ project files මකාදමනු ලබන අතර, ඒ සඳහා අප ආයතනය කිසිදු වගකීමක් නොදරයි.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 8: CONFIRMATION & FEEDBACK -->
+        <div class="confirmation-section mt-5" id="step8Section">
+          <div class="section-badge-gold" data-i18n="feedbackStepTitle">STEP 8: CONFIRMATION & FEEDBACK</div>
+          <h3 class="portal-card-title" data-i18n="feedbackSubTitle">වීඩියෝව භාරගැනීම සහ සංශෝධන (Revisions)</h3>
+          
+          <div class="confirm-box mt-3">
+            <div class="revision-form">
+              <label data-i18n="revisionBoxLabel">අඩුපාඩු හෝ වෙනස් විය යුතු තැන් (Timecode සමඟ සඳහන් කරන්න):</label>
+              <textarea id="revisionNotes" rows="3" placeholder="උදා: 12:45 වෙලාවේ clip එකේ audio sound එක වැඩි කරන්න..."></textarea>
+              <div class="revision-actions mt-3">
+                <button class="btn-outline-gold" onclick="submitRevisions()">
+                  <i class="fa-solid fa-paper-plane"></i> <span data-i18n="btnSubmitRevisions">Submit Revisions to Studio</span>
+                </button>
+                <button class="btn-primary-gold" onclick="confirmVideoAccepted()">
+                  <i class="fa-solid fa-circle-check"></i> <span data-i18n="btnAcceptVideo">කිසිදු ගැටලුවක් නැත - වීඩියෝව සතුටින් භාරගත්තෙමි</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 9: 5-STAR RATING & REVIEWS -->
+        <div class="review-section mt-5" id="reviewSubmissionBox">
+          <div class="section-badge-gold" data-i18n="rateStepTitle">STEP 9: RATE & REVIEW OCTEWYA</div>
+          <h3 class="portal-card-title" data-i18n="rateSubTitle">අපෙන් ලැබුණු සේවාව පිළිබඳ ඔබේ අදහස (Rate Us)</h3>
+          
+          <div class="rating-widget mt-3">
+            <div class="star-rating" id="starRating">
+              <i class="fa-solid fa-star star active" data-val="1" onclick="setRating(1)"></i>
+              <i class="fa-solid fa-star star active" data-val="2" onclick="setRating(2)"></i>
+              <i class="fa-solid fa-star star active" data-val="3" onclick="setRating(3)"></i>
+              <i class="fa-solid fa-star star active" data-val="4" onclick="setRating(4)"></i>
+              <i class="fa-solid fa-star star active" data-val="5" onclick="setRating(5)"></i>
+            </div>
+            <span class="rating-desc" id="ratingDesc">Excellent (5 Stars)</span>
+          </div>
+
+          <textarea id="reviewComment" rows="3" class="mt-3" placeholder="OCTEWYA Cinematography සේවාව, වීඩියෝවේ ගුණාත්මකභාවය සහ Dasun Kavinda ගේ කණ්ඩායම පිළිබඳ ඔබේ අදහස මෙහි ලියන්න..."></textarea>
+          <button class="btn-primary-gold mt-2" onclick="submitPublicReview()">
+            <i class="fa-solid fa-share-from-square"></i> <span data-i18n="btnPublishReview">Submit Review for Showcase</span>
+          </button>
+        </div>
+
+      </div>
+
+    </div>
+  </main>
+
+  <!-- CELEBRATION MODAL (Warm wishes on married life when video accepted) -->
+  <div id="celebrationModal" class="modal-overlay hidden">
+    <div class="celebration-modal">
+      <div class="celebration-icon">
+        <i class="fa-solid fa-champagne-glasses"></i>
+      </div>
+      <h2 class="celebration-title">Congratulations & Best Wishes! 🎉</h2>
+      <p class="celebration-wishes" id="celebrationWishesText">
+        ඔබ දෙපලගේ අභිනව විවාහ දිවිය ආදරයෙන්, සතුටෙන් සහ සාමයෙන් පිරි වාසනාවන්ත එකක් වේවායි OCTEWYA Cinematography (Dasun Kavinda) අපගේ හදපිරි සුබ පැතුම්! ඔබගේ සිනමාත්මක මතකය නිර්මාණය කිරීමට ලැබීම අපට මහත් ගෞරවයක්.
+      </p>
+      <button class="btn-back-dashboard" onclick="closeCelebrationModal()">
+        <i class="fa-solid fa-arrow-left"></i> Back to Dashboard
+      </button>
+    </div>
+  </div>
+
+  <!-- Edit Details Modal -->
+  <div id="editDetailsModal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-pen-to-square"></i> Update Dates or Package</h3>
+        <button class="modal-close" onclick="closeEditDetailsModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="small-text">ඔබ දිනයක් හෝ පැකේජයක් වෙනස් කළ විට ස්වයංක්‍රීයව Dasun Kavinda වෙත WhatsApp Notification එකක් යවනු ලැබේ.</p>
+        <div class="form-group mt-3">
+          <label>Wedding Date</label>
+          <input type="date" id="editWeddingDate">
+        </div>
+        <div class="form-group mt-2">
+          <label>Pre-Shoot Date</label>
+          <input type="date" id="editPreshootDate">
+        </div>
+        <div class="form-group mt-2">
+          <label>Pre-Shoot Location</label>
+          <input type="text" id="editPreshootLocation">
+        </div>
+        <div class="form-group mt-2">
+          <label>Reason for change / Notes</label>
+          <textarea id="editChangeReason" rows="2" placeholder="දිනය වෙනස් කිරීමට හේතුව..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-outline-light" onclick="closeEditDetailsModal()">Cancel</button>
+        <button class="btn-primary-gold" onclick="saveClientChanges()">Save & Notify Studio</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="fontawesome.js"></script>
+  <script src="translations.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

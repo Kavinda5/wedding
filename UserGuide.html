@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OCTEWYA Portal - Complete System User Guide & Workflow Manual</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    @page { size: A4; margin: 16mm; }
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      color: #1F2937;
+      background: #F9FAFB;
+      line-height: 1.6;
+      margin: 0;
+      padding: 0;
+    }
+    .print-banner {
+      background: #090A0F;
+      color: #fff;
+      padding: 14px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      border-bottom: 2px solid #D4AF37;
+    }
+    .btn-save-pdf {
+      background: #D4AF37;
+      color: #000;
+      border: none;
+      padding: 8px 24px;
+      border-radius: 20px;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .guide-container {
+      max-width: 900px;
+      margin: 30px auto;
+      background: #fff;
+      padding: 40px 50px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    }
+    .guide-header {
+      border-bottom: 2px solid #E5E7EB;
+      padding-bottom: 20px;
+      margin-bottom: 30px;
+    }
+    .brand-title {
+      font-size: 26px;
+      font-weight: 800;
+      color: #111;
+      letter-spacing: 1px;
+    }
+    .gold-text { color: #D4AF37; }
+    .guide-badge {
+      background: #FEF3C7;
+      color: #92400E;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 20px;
+      display: inline-block;
+      margin-bottom: 10px;
+    }
+    h2 {
+      font-size: 20px;
+      color: #111;
+      border-left: 4px solid #D4AF37;
+      padding-left: 12px;
+      margin-top: 36px;
+      margin-bottom: 14px;
+    }
+    h3 {
+      font-size: 16px;
+      color: #374151;
+      margin-top: 20px;
+      margin-bottom: 8px;
+    }
+    p, li { font-size: 14px; color: #4B5563; }
+    ul, ol { padding-left: 24px; margin-bottom: 16px; }
+    li { margin-bottom: 8px; }
+    .callout-box {
+      background: #F3F4F6;
+      border-left: 4px solid #3B82F6;
+      padding: 14px 18px;
+      border-radius: 0 8px 8px 0;
+      margin: 18px 0;
+      font-size: 13.5px;
+    }
+    .callout-box.gold {
+      background: #FFFBEB;
+      border-left-color: #D4AF37;
+    }
+    .callout-box.red {
+      background: #FEF2F2;
+      border-left-color: #EF4444;
+    }
+    .step-badge-num {
+      background: #111;
+      color: #D4AF37;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+      margin-right: 6px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 18px 0;
+      font-size: 13px;
+    }
+    th, td {
+      border: 1px solid #E5E7EB;
+      padding: 10px 14px;
+      text-align: left;
+    }
+    th { background: #111; color: #D4AF37; font-weight: 700; }
+    @media print {
+      .print-banner { display: none; }
+      body { background: #fff; }
+      .guide-container { box-shadow: none; padding: 0; margin: 0; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="print-banner">
+    <div>
+      <strong>OCTEWYA CINEMATOGRAPHY - SYSTEM USER MANUAL</strong>
+      <span style="font-size: 12px; color: #D4AF37; margin-left: 12px;">Dasun Kavinda Operations Guide</span>
+    </div>
+    <button class="btn-save-pdf" onclick="window.print()">
+      <i class="fa-solid fa-file-pdf"></i> Download / Print as PDF
+    </button>
+  </div>
+
+  <div class="guide-container">
+    <div class="guide-header">
+      <span class="guide-badge">OFFICIAL OPERATIONS MANUAL</span>
+      <div class="brand-title">OCTEWYA CINEMATOGRAPHY PORTAL GUIDE</div>
+      <p style="margin: 4px 0 0; color: #6B7280; font-size: 14px;">
+        දසුන් කාවින්ද සඳහා පද්ධතිය එදිනෙදා භාවිතය, Booking පාලනය සහ පාරිභෝගිකයින් සමඟ සන්නිවේදනය පිළිබඳ සම්පූර්ණ මාර්ගෝපදේශය.
+      </p>
+    </div>
+
+    <h2>1. පද්ධතියේ ප්‍රධාන පිටු 3 (The 3 Core System Links)</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>පිටුව (Web Page)</th>
+          <th>Link එක (URL)</th>
+          <th>භාවිතා කරන ආකාරය</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>1. Packages & Booking</strong></td>
+          <td><code>index.html</code></td>
+          <td>අලුත් පාරිභෝගිකයින්ට පැකේජ බැලීමට, ගණනය කිරීමට, නියමයන් කියවීමට සහ Booking එකක් දමා Slip upload කිරීමට ලබාදෙන පොදු Link එක.</td>
+        </tr>
+        <tr>
+          <td><strong>2. Couple Private Portal</strong></td>
+          <td><code>portal.html?id=OCT-XXXX</code></td>
+          <td>අදාළ මනාල යුවළට පමණක් වෙන්වූ රහස්‍ය Dashboard එක. මෙහි වෙනත් යුවළවල තොරතුරු හෝ Admin බොත්තම් නොමැත.</td>
+        </tr>
+        <tr>
+          <td><strong>3. Studio Admin Panel</strong></td>
+          <td><code>admin.html</code></td>
+          <td>දසුන්ට පමණක් Weddings සියල්ලම Search කිරීමට, Steps update කිරීමට, Payment තහවුරු කිරීමට සහ Documents ලබාගැනීමට ඇති ප්‍රධාන පාලන මැදිරිය.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>2. අලුත් Wedding එකක් Booking කරගැනීමේ ක්‍රමවේදය</h2>
+    <p>අලුත් Couple එකක් සම්බන්ධ වූ විට ඔබට ක්‍රම 2කට Booking එක කළ හැක:</p>
+    <ul>
+      <li><strong>ක්‍රමය 01 (Customer විසින්ම සම්පූර්ණ කිරීම):</strong> Customer ට <code>index.html</code> Link එක යවන්න. ඔවුන් පැකේජය තෝරා, කොන්දේසි වලට එකඟ වී, විස්තර පුරවා Bank Slip එක Upload කරයි. Booking එක සම්පූර්ණ වූ සැණින් ඔවුන්ගේ පුද්ගලික Portal එක විවෘත වේ.</li>
+      <li><strong>ක්‍රමය 02 (ඔබ විසින්ම ඇතුළත් කිරීම):</strong> Customer දුරකථනයෙන් හෝ WhatsApp මඟින් විස්තර ලබාදුන්නේ නම්, ඔබම <code>index.html</code> වෙත ගොස් විස්තර පුරවා Submit කරන්න. එවිට System එකෙන් නව Booking ID එකක් (උදා: <code>OCT-2026-003</code>) ස්වයංක්‍රීයව හැදේ.</li>
+    </ul>
+
+    <h2>3. එක් එක් Couple එකට වෙන වෙනම Direct Links යවන්නේ කෙසේද?</h2>
+    <div class="callout-box gold">
+      <strong>රහස්‍යභාවය (Client Data Privacy):</strong><br>
+      සෑම Couple එකකටම හිමිවන්නේ ඔවුන්ගේ Unique ID එක සහිත Link එකකි. (උදා: <code>http://.../portal.html?id=OCT-2026-001</code>).<br>
+      එම Link එකෙන් ඇතුළු වූ විට Sachini & Dasun ට පෙනෙන්නේ ඔවුන්ගේ Countdown එක සහ ඔවුන්ගේ Video ප්‍රගතිය පමණි!
+    </div>
+    
+    <p><strong>Link එක WhatsApp මඟින් යැවීමේ පියවර:</strong></p>
+    <ol>
+      <li><code>admin.html</code> වෙත පිවිසෙන්න.</li>
+      <li>වගුවේ ඇති අදාළ Couple එක ඉදිරියෙන් ඇති <strong>"Manage"</strong> බොත්තම ඔබන්න.</li>
+      <li>දකුණු පස ඇති <strong>"Customer's Direct Secret Portal Link"</strong> කොටුවේ ඇති <strong>"Copy"</strong> බොත්තම ඔබන්න.</li>
+      <li>නැතහොත් පහළින් ඇති <strong>"Send Booking Confirmation & Portal Link"</strong> බොත්තම ඔබන්න. එවිට ස්වයංක්‍රීයවම අදාළ Couple එකේ WhatsApp අංකයට මෙම Direct Link එක සහිත සුබපැතුම් පණිවිඩය සූදානම් වී විවෘත වේ!</li>
+    </ol>
+
+    <h2>4. එදිනෙදා වීඩියෝ නිෂ්පාදන පියවර (Production Stepper) පාලනය</h2>
+    <p>වීඩියෝව සකස් කරන අතරතුර ඔබ Admin Panel එකෙන් සිදුකළ යුත්තේ අදාළ පියවරේ Button එක Click කිරීම පමණි:</p>
+    <ol>
+      <li><span class="step-badge-num">1</span> <strong>Chip Backup to External Hard Drive:</strong> Shoot එක අවසන් වී footage backup කළ පසු මෙය ඔබන්න. Customer Dashboard එකේ පළමු පියවර Active වේ.</li>
+      <li><span class="step-badge-num">2</span> <strong>Editing Started (Hadanna Patan Gatta):</strong> වීඩියෝව Edit කිරීමට පටන්ගත් විට මෙය ඔබන්න. (මෙය එබූ පසු Super Fast Delivery offer එක Dashboard එකෙන් ස්වයංක්‍රීයව අතුරුදහන් වේ).</li>
+      <li><span class="step-badge-num">3</span> <strong>Rough Cut Completed:</strong> මූලික Sequence පෙළගැස්ම අවසන් වූ පසු ඔබන්න.</li>
+      <li><span class="step-badge-num">4</span> <strong>Colour Grading:</strong> වර්ණ සංකලනය සිදුවන බව පාරිභෝගිකයාට දැනුම් දීමට මෙය ඔබන්න.</li>
+      <li><span class="step-badge-num">5</span> <strong>Exporting Process:</strong> Master file එක Render වෙමින් පවතින බව පෙන්වයි.</li>
+      <li><span class="step-badge-num">6</span> <strong>Ready for Viewing (Balanna Suudanam):</strong> මෙය එබූ සැණින් Customer Dashboard එකේ <strong>Step 7 (Delivery Selection - USB / Cloud Drive)</strong> සහ <strong>Step 8 (Feedback / Acceptance)</strong> විවෘත වේ!</li>
+    </ol>
+
+    <h2>5. Official Quotations (Letterhead) සහ Legal Agreements (PDF) ලබාගැනීම</h2>
+    <p>ඔබගේ Admin Panel එකේ අලුතින් එක්කර ඇති <strong>"Official PDF Documents"</strong> කොටසින්:</p>
+    <ul>
+      <li><strong>Download Official Quotation (Letterhead PDF):</strong> ඔබගේ නිල <code>Letter Hed.jpg</code> රාමුව මත අදාළ Couple එක තෝරාගත් සියලුම Packages සහ Add-ons වල මිල ගණන්, ගෙවූ අත්තිකාරම සහ ඉතිරි මුදල සහිත නිල Quotation පත්‍රිකාව 1-Click එකෙන් PDF ලෙස Save කරගත හැක.</li>
+      <li><strong>Download Legal Agreement & Contract (PDF):</strong> යම් නෛතික ගැටලුවක් හෝ සාක්ෂියක් අවශ්‍ය වූ විට, පාරිභෝගිකයාගේ සම්පූර්ණ තොරතුරු, වෙන්කළ දිනයන් සහ ඔවුන් <strong>අංක 11 වන Limitation of Liability (තාක්ෂණික අවදානම් සහ වගකීම් සීමාව)</strong> ඇතුළු නියමයන් 11ටම එකඟ වූ බව සනාථ කරන නෛතික ලේඛනය PDF ලෙස ලබාගත හැක.</li>
+    </ul>
+
+    <h2>6. Super Fast Premiere Delivery පාලනය</h2>
+    <ul>
+      <li>ඔබට එක ළඟ Wedding වැඩ අධික නම්, Admin Panel එකේ ඇති <strong>Super Fast Delivery Switch</strong> එක Off කර තබන්න.</li>
+      <li>ඔබට වැඩ නිදහස් නම් එය On කර තබන්න. එවිට අදාළ Wedding එකට දින 1කට පෙර පාරිභෝගිකයාගේ Dashboard එකේ පමණක් මෙම VIP Offer එක දිස්වේ.</li>
+    </ul>
+
+    <div class="callout-box red">
+      <strong>අවසාන පියවර (Video Accepted):</strong><br>
+      Customer විසින් වීඩියෝව භාරගත් බව තහවුරු කළ විට, ඔවුන්ට මංගල දිවියට සුබ පතන Celebration Card එකක් දිස්වන අතර, ඉන්පසු Dashboard එක <strong>"PROJECT COMPLETED & DELIVERED"</strong> ලෙස සම්පූර්ණයෙන්ම Lock වේ.
+    </div>
+  </div>
+
+</body>
+</html>
