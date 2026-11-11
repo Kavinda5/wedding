@@ -89,7 +89,9 @@ const TRANSLATIONS = {
     // Super Fast Editing Service
     vipExpressBadge: "VIP FAST-TRACK",
     superFastTitle: "Super Fast Editing Service",
-    superFastDesc: "We offer an exclusive fast track editing service, ensuring your wedding video is fully edited by the day following your wedding.",
+    superFastDesc: "We offer an exclusive fast-track editing service, ensuring your wedding video is fully edited and delivered within 2 to 3 days following your wedding (Package 01 & 02: 10,000 LKR within 2 days | Package 03 & VIP: 15,000 LKR within 3 days).",
+    superFastLockedBadge: "Locked During Booking",
+    superFastNote: "Note: This exclusive service becomes available for request 1 day prior to your wedding date, strictly subject to studio schedule availability.",
     btnAcceptExpress: "Request Super Fast Editing Service",
     lblPrimaryWhatsApp: "Primary WhatsApp for Updates & Invoices *",
     primaryWhatsAppHint: "The primary contact who manages wedding arrangements will receive all live video updates and official invoices here.",
@@ -220,9 +222,11 @@ const TRANSLATIONS = {
     
     // Super Fast Editing Service
     vipExpressBadge: "VIP FAST-TRACK",
-    superFastTitle: "Super Fast Editing Service",
-    superFastDesc: "We offer an exclusive fast track editing service, ensuring your wedding video is fully edited by the day following your wedding. (මංගල උත්සවය නිමවූ පසුදිනම සම්පූර්ණ වීඩියෝව සංස්කරණය කර ලබාදීමේ සුවිශේෂී සේවාවකි).",
-    btnAcceptExpress: "Super Fast Editing Service ඉල්ලුම් කරන්න",
+    superFastTitle: "Super Fast Editing Service (කඩිනම් සංස්කරණ සේවාව)",
+    superFastDesc: "අපගේ විශේෂිත Super Fast Editing සේවාව මඟින්, ඔබගේ මංගල වීඩියෝව මංගල උත්සවයෙන් පසු ඉතා කඩිනමින් (Package 01, 02 සඳහා: 10,000 LKR දින 2ක් ඇතුළත | Package 03, VIP සඳහා: 15,000 LKR දින 3ක් ඇතුළත) සම්පූර්ණයෙන්ම සංස්කරණය (Edit) කර ඔබට ලබාදීම සහතික කරනු ලැබේ.",
+    superFastLockedBadge: "Booking දැමීමේදී තාවකාලිකව අගුළුලා ඇත",
+    superFastNote: "විශේෂ සටහන: මෙම සේවාව මංගල දිනයට දින 1කට පෙර Studio Availability අනුව Dashboard එකෙන් පරීක්ෂා කර පාරිභෝගික Portal එක හරහා ලබාගත හැකි වන පරිදි Unlock කරනු ලැබේ.",
+    btnAcceptExpress: "Super Fast Editing Service ලබාගන්න",
     lblPrimaryWhatsApp: "සියලුම Updates & Invoices ලැබිය යුතු ප්‍රධාන WhatsApp අංකය *",
     primaryWhatsAppHint: "Wedding planning සිදුකරන ප්‍රධාන පාර්ශවයට සියලුම Video Updates සහ Invoices ලැබීමට මෙම අංකය භාවිතා කෙරේ.",
     

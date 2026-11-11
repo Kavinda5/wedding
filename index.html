@@ -125,26 +125,26 @@
             <div class="express-info-header">
               <div class="icon-wrap"><i class="fa-solid fa-bolt" style="color: var(--gold);"></i></div>
               <div>
-                <h4>Super Fast Editing Service</h4>
-                <p class="desc">"We offer an exclusive fast track editing service, ensuring your wedding video is fully edited by the day following your wedding."</p>
+                <h4 data-i18n="superFastTitle">Super Fast Editing Service</h4>
+                <p class="desc" data-i18n="superFastDesc">"We offer an exclusive fast-track editing service, ensuring your wedding video is fully edited and delivered within 2-3 days following your wedding (Package 01 & 02: 10,000 LKR within 2 days | Package 03 & VIP: 15,000 LKR within 3 days)."</p>
               </div>
-              <span class="badge-locked"><i class="fa-solid fa-lock"></i> Locked During Booking</span>
+              <span class="badge-locked" data-i18n="superFastLockedBadge"><i class="fa-solid fa-lock"></i> Locked During Booking</span>
             </div>
             <div class="express-info-footer">
               <i class="fa-solid fa-circle-info" style="color: var(--gold);"></i>
-              <span>Note: This exclusive service becomes available for request 1 day prior to the wedding date, strictly subject to studio schedule availability. (Wedding එකට දිනකට පෙර Studio Availability අනුව Customer Portal එකෙන් මෙම සේවාව ලබාගත හැක).</span>
+              <span data-i18n="superFastNote">Note: This exclusive service becomes available for request 1 day prior to the wedding date, strictly subject to studio schedule availability. (Wedding එකට දිනකට පෙර Studio Availability අනුව Customer Portal එකෙන් මෙම සේවාව ලබාගත හැක).</span>
             </div>
           </div>
 
-          <!-- Special Custom Package Builder Card -->
+          <!-- Special Custom Package Builder Card (Studio Admin Only) -->
           <div class="custom-builder-card" id="customPackageBuilderCard">
-            <div style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;" onclick="toggleCustomBuilderCollapse()">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
               <div>
-                <span class="badge-gold" style="font-size: 10px;"><i class="fa-solid fa-sliders"></i> SPECIAL CUSTOM CLIENTS</span>
+                <span class="badge-gold" style="font-size: 10px;"><i class="fa-solid fa-lock"></i> STUDIO ADMIN ONLY</span>
                 <h3 style="color: #fff; font-size: 16px; margin-top: 4px;">Custom Wedding Package Builder</h3>
-                <p style="font-size: 12px; color: var(--text-muted); margin: 0;">Standard Packages වල මිල ගණන් නොගැලපෙන විශේෂ පාරිභෝගිකයින් සඳහා Custom මිල ගණන් ඇතුළත් කරන්න.</p>
+                <p style="font-size: 12px; color: var(--text-muted); margin: 0;">විශේෂ පාරිභෝගිකයින් සඳහා Custom මිල ගණන් ඇතුළත් කිරීම Studio Admin හට පමණක් සීමා කර ඇත.</p>
               </div>
-              <button type="button" class="btn-outline-gold" style="font-size: 11px; padding: 5px 10px;" id="btnToggleCustomBuilder">Open Builder</button>
+              <button type="button" class="btn-outline-gold" style="font-size: 11px; padding: 6px 12px;" id="btnToggleCustomBuilder" onclick="unlockCustomBuilderWithPin()"><i class="fa-solid fa-key"></i> Unlock (Studio PIN)</button>
             </div>
 
             <div id="customBuilderBody" style="display: none; margin-top: 16px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 14px;">

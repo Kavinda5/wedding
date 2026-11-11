@@ -1557,6 +1557,16 @@ function evaluateExpressDeliveryCard(booking) {
   const card = document.getElementById("expressDeliveryCard");
   if (!card) return;
 
+  const isPkg3OrVIP = booking.selectedPackage?.id === "pkg_03" || booking.selectedPackage?.id === "pkg_vip";
+  const cost = isPkg3OrVIP ? 15000 : 10000;
+  const daysText = isPkg3OrVIP 
+    ? (currentLang === 'si' ? "දින 3ක් ඇතුළත (Within 3 Days)" : "Within 3 Days")
+    : (currentLang === 'si' ? "දින 2ක් ඇතුළත (Within 2 Days)" : "Within 2 Days");
+
+  const fullDesc = currentLang === 'si'
+    ? `අපගේ විශේෂිත Super Fast Editing සේවාව මඟින්, ඔබගේ මංගල වීඩියෝව මංගල උත්සවයෙන් පසු ඉතා කඩිනමින් (${isPkg3OrVIP ? 'Package 03, VIP සඳහා දින 3ක් ඇතුළත' : 'Package 01, 02 සඳහා දින 2ක් ඇතුළත'}) සම්පූර්ණයෙන්ම සංස්කරණය (Edit) කර ඔබට ලබාදීම සහතික කරනු ලැබේ.`
+    : `We offer an exclusive fast-track editing service, ensuring your wedding video is fully edited and delivered ${isPkg3OrVIP ? 'within 3 days' : 'within 2 days'} following your wedding (Package 01 & 02: within 2 days | Package 03 & VIP: within 3 days).`;
+
   // If already accepted:
   if (booking.expressDeliveryAccepted) {
     card.style.display = "block";
@@ -1564,10 +1574,13 @@ function evaluateExpressDeliveryCard(booking) {
       <div class="express-confirmed-box">
         <i class="fa-solid fa-bolt" style="color: var(--gold); font-size: 24px;"></i>
         <div>
-          <strong style="color: #fff; font-size: 15px;">Super Fast Editing Service Confirmed!</strong>
-          <p style="margin: 4px 0 0; font-size: 12.5px; color: #ddd;">
-            "We offer an exclusive fast track editing service, ensuring your wedding video is fully edited by the day following your wedding."
+          <strong style="color: #fff; font-size: 15px;">${currentLang === 'si' ? 'Super Fast Editing Service සේවාව තහවුරු විය!' : 'Super Fast Editing Service Confirmed!'}</strong>
+          <p style="margin: 4px 0 0; font-size: 12.5px; color: #ddd; line-height: 1.5;">
+            "${fullDesc}"
           </p>
+          <span style="display: block; margin-top: 5px; font-size: 12px; color: var(--gold); font-weight: 700;">
+            <i class="fa-solid fa-clock"></i> ${daysText} (+${formatLKR(cost)} LKR)
+          </span>
         </div>
       </div>
     `;
@@ -1583,9 +1596,6 @@ function evaluateExpressDeliveryCard(booking) {
   // If manually enabled by Dasun in Admin
   if (booking.expressDeliveryAvailable) {
     card.style.display = "block";
-    const isPkg3OrVIP = booking.selectedPackage?.id === "pkg_03" || booking.selectedPackage?.id === "pkg_vip";
-    const daysText = isPkg3OrVIP ? "Within 3 Days (දින 3ක් ඇතුළත)" : "By Day Following Wedding (පසුදිනම)";
-    const cost = isPkg3OrVIP ? 15000 : 10000;
 
     card.innerHTML = `
       <div class="express-card-inner" style="background: linear-gradient(135deg, rgba(212, 175, 55, 0.12) 0%, rgba(20, 24, 38, 0.98) 100%); border: 1px solid var(--border-gold); border-radius: var(--radius-md); padding: 20px;">
@@ -1593,11 +1603,11 @@ function evaluateExpressDeliveryCard(booking) {
           <div style="flex: 1; min-width: 250px;">
             <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
               <span class="badge-gold"><i class="fa-solid fa-bolt"></i> VIP FAST-TRACK</span>
-              <span class="badge-success"><i class="fa-solid fa-circle-check"></i> Available for You</span>
+              <span class="badge-success"><i class="fa-solid fa-circle-check"></i> ${currentLang === 'si' ? 'ඔබ වෙනුවෙන් විවෘතයි' : 'Available for You'}</span>
             </div>
             <h3 style="color: #fff; font-size: 17px; margin: 0 0 6px;">Super Fast Editing Service</h3>
             <p style="font-size: 13px; color: #e0e0e0; line-height: 1.5; margin: 0 0 10px;">
-              "We offer an exclusive fast track editing service, ensuring your wedding video is fully edited by the day following your wedding."
+              "${fullDesc}"
             </p>
             <span style="font-size: 12px; color: var(--gold-light);"><i class="fa-solid fa-clock"></i> Express Delivery: <strong>${daysText}</strong></span>
           </div>
@@ -1618,13 +1628,17 @@ function evaluateExpressDeliveryCard(booking) {
         <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
           <i class="fa-solid fa-bolt" style="color: var(--gold);"></i>
           <strong style="color: #fff; font-size: 14px;">Super Fast Editing Service</strong>
-          <span class="badge-locked" style="font-size: 10px;"><i class="fa-solid fa-lock"></i> Locked</span>
+          <span class="badge-locked" style="font-size: 10px;"><i class="fa-solid fa-lock"></i> ${currentLang === 'si' ? 'අගුළුලා ඇත (Locked)' : 'Locked'}</span>
         </div>
-        <p style="margin: 0 0 6px; font-size: 12.5px; color: #bbb; font-style: italic;">
-          "We offer an exclusive fast track editing service, ensuring your wedding video is fully edited by the day following your wedding."
+        <p style="margin: 0 0 6px; font-size: 12.5px; color: #bbb; line-height: 1.5;">
+          "${currentLang === 'si' 
+            ? 'අපගේ විශේෂිත Super Fast Editing සේවාව මඟින්, ඔබගේ මංගල වීඩියෝව මංගල උත්සවයෙන් පසු ඉතා කඩිනමින් (Package 01, 02 සඳහා: 10,000 LKR දින 2ක් ඇතුළත | Package 03, VIP සඳහා: 15,000 LKR දින 3ක් ඇතුළත) සම්පූර්ණයෙන්ම සංස්කරණය (Edit) කර ඔබට ලබාදීම සහතික කරනු ලැබේ.' 
+            : 'We offer an exclusive fast-track editing service, ensuring your wedding video is fully edited and delivered within 2-3 days following your wedding (Package 01 & 02: 10,000 LKR within 2 days | Package 03 & VIP: 15,000 LKR within 3 days).'}"
         </p>
         <span style="font-size: 11.5px; color: var(--text-muted); display: block;">
-          <i class="fa-solid fa-circle-info"></i> මෙම සේවාව මංගල දිනයට දින 1කට පෙර Studio Availability අනුව පරීක්ෂා කර Dashboard එකෙන් Unlock කරනු ලැබේ.
+          <i class="fa-solid fa-circle-info"></i> ${currentLang === 'si' 
+            ? 'මෙම සේවාව මංගල දිනයට දින 1කට පෙර Studio Availability අනුව Dashboard එකෙන් Unlock කරනු ලැබේ.' 
+            : 'This exclusive service becomes available 1 day prior to the wedding date, strictly subject to studio schedule availability.'}
         </span>
       </div>
     `;
@@ -1635,6 +1649,7 @@ function acceptExpressDelivery() {
   const booking = getActiveBooking();
   const isPkg3OrVIP = booking.selectedPackage?.id === "pkg_03" || booking.selectedPackage?.id === "pkg_vip";
   const cost = isPkg3OrVIP ? 15000 : 10000;
+  const commitmentText = isPkg3OrVIP ? "Within 3 Days (+15,000 LKR)" : "Within 2 Days (+10,000 LKR)";
 
   booking.expressDeliveryAccepted = true;
   booking.expressDeliveryFee = cost;
@@ -1642,14 +1657,14 @@ function acceptExpressDelivery() {
   saveDataToStorage(booking);
 
   loadPortalData(booking.id);
-  showToast("Express Service Confirmed!", `Super Fast Editing Service commitment added.`);
+  showToast("Express Service Confirmed!", `Super Fast Editing Service commitment added (${commitmentText}).`);
 
   sendCleanWhatsAppMessage(
     "0714277276",
     `⚡ *Super Fast Editing Service Requested!*
 Couple: ${booking.coupleTitle} (ID: ${booking.id})
 Wedding Date: ${booking.weddingDate}
-Delivery Commitment: ${isPkg3OrVIP ? '3 Days (+15,000 LKR)' : 'Next Day (+10,000 LKR)'}`
+Delivery Commitment: ${commitmentText}`
   );
 }
 
@@ -2406,13 +2421,44 @@ ${getBaseUrl()}admin.html`
   );
 }
 
+let isCustomBuilderUnlocked = false;
+
+function unlockCustomBuilderWithPin() {
+  const pin = prompt("🔒 [Studio Admin Only]\nවිශේෂ පාරිභෝගිකයින් සඳහා Custom මිල ගණන් සැකසීමට Studio Security PIN ඇතුළත් කරන්න:");
+  if (pin === null) return;
+  const currentPin = localStorage.getItem(STORAGE_KEY_PIN) || DEFAULT_ADMIN_PIN;
+  if (pin.trim() === currentPin) {
+    isCustomBuilderUnlocked = true;
+    showToast("Admin Verified", "Custom Package Builder සාර්ථකව Unlock විය!");
+    const body = document.getElementById("customBuilderBody");
+    const btn = document.getElementById("btnToggleCustomBuilder");
+    if (body) body.style.display = "block";
+    if (btn) {
+      btn.innerHTML = `<i class="fa-solid fa-lock-open"></i> Close Builder`;
+    }
+    calculateCustomPackage();
+  } else {
+    alert("❌ වැරදි Studio Security PIN අංකයකි!\nCustom මිල ගණන් ඇතුළත් කළ හැක්කේ Studio Admin (Dasun Kavinda) හට පමණි.");
+  }
+}
+
 function toggleCustomBuilderCollapse() {
+  const isAdminPage = !!document.getElementById("adminBookingsTableBody");
+  if (!isAdminPage && !isCustomBuilderUnlocked) {
+    unlockCustomBuilderWithPin();
+    return;
+  }
+
   const body = document.getElementById("customBuilderBody");
   const btn = document.getElementById("btnToggleCustomBuilder");
   if (!body) return;
   const isHidden = body.style.display === "none";
   body.style.display = isHidden ? "block" : "none";
-  if (btn) btn.textContent = isHidden ? "Close Builder" : "Open Builder";
+  if (btn) {
+    btn.innerHTML = isHidden 
+      ? `<i class="fa-solid fa-lock-open"></i> Close Builder` 
+      : (isAdminPage ? `<i class="fa-solid fa-sliders"></i> Open Builder` : `<i class="fa-solid fa-key"></i> Unlock (Studio PIN)`);
+  }
   if (isHidden) calculateCustomPackage();
 }
 
