@@ -9,6 +9,10 @@ function printQuotation(type, customBooking) {
   if (!booking && typeof getActiveBooking === 'function') {
     booking = getActiveBooking();
   }
+  if (typeof type === 'object' && type !== null && !customBooking) {
+    booking = type;
+    type = 'advance';
+  }
   if (typeof type === 'string' && typeof allBookings !== 'undefined') {
     const found = allBookings.find(b => b.id === type);
     if (found) {
@@ -86,16 +90,16 @@ function printQuotation(type, customBooking) {
 
   let docTitle = "OFFICIAL QUOTATION";
   let docRef = `QUO-${booking.id}`;
-  let statusBadgeHtml = `<span style="background: #F59E0B; color: #000; padding: 4px 10px; border-radius: 4px; font-weight: 700; font-size: 11px;">PROVISIONAL ESTIMATE</span>`;
+  let statusBadgeHtml = `<span style="background: #FFFBEB; color: #B45309; border: 1px solid #FCD34D; padding: 5px 12px; border-radius: 20px; font-weight: 700; font-size: 11px; letter-spacing: 0.5px; display: inline-block;">PROVISIONAL ESTIMATE</span>`;
 
   if (isFullSettled) {
     docTitle = "OFFICIAL FINAL SETTLEMENT INVOICE";
     docRef = `INV-FULL-${booking.id}`;
-    statusBadgeHtml = `<span style="background: #10B981; color: #fff; padding: 4px 10px; border-radius: 4px; font-weight: 700; font-size: 11px;">100% FULLY PAID & SETTLED ✓</span>`;
+    statusBadgeHtml = `<span style="background: #ECFDF5; color: #047857; border: 1px solid #6EE7B7; padding: 5px 12px; border-radius: 20px; font-weight: 700; font-size: 11px; letter-spacing: 0.5px; display: inline-block;">100% FULLY PAID & SETTLED ✓</span>`;
   } else if (isAdvanceVerified) {
     docTitle = "OFFICIAL INVOICE & CONFIRMATION";
     docRef = `INV-${booking.id}`;
-    statusBadgeHtml = `<span style="background: #1E3A8A; color: #93C5FD; border: 1px solid #3B82F6; padding: 4px 10px; border-radius: 4px; font-weight: 700; font-size: 11px;">ADVANCE VERIFIED & BOOKING CONFIRMED ✓</span>`;
+    statusBadgeHtml = `<span style="background: #EFF6FF; color: #1D4ED8; border: 1px solid #93C5FD; padding: 5px 12px; border-radius: 20px; font-weight: 700; font-size: 11px; letter-spacing: 0.5px; display: inline-block;">ADVANCE VERIFIED & BOOKING CONFIRMED ✓</span>`;
   }
 
   const primaryPhone = booking.primaryPhone || booking.bridePhone || booking.groomPhone || "";
@@ -106,160 +110,366 @@ function printQuotation(type, customBooking) {
 <head>
   <meta charset="utf-8">
   <title>${docTitle} - ${booking.coupleTitle}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
-    @page { size: A4 portrait; margin: 0; }
+    @page { 
+      size: A4 portrait; 
+      margin: 0; 
+    }
+    * {
+      box-sizing: border-box;
+    }
     body {
       margin: 0;
       padding: 0;
-      font-family: 'Segoe UI', Arial, sans-serif;
-      color: #111;
-      background: #fff;
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      color: #1E293B;
+      background: #E2E8F0;
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
+    }
+    .print-bar {
+      background: #0F172A;
+      color: #F8FAFC;
+      padding: 14px 24px;
+      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 18px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .print-bar span {
+      font-size: 13.5px;
+      font-weight: 500;
+      color: #CBD5E1;
+    }
+    .btn-print {
+      background: linear-gradient(135deg, #D4AF37 0%, #AA8010 100%);
+      border: 1px solid #FFE082;
+      color: #0F172A;
+      font-weight: 800;
+      font-size: 13px;
+      padding: 9px 24px;
+      border-radius: 30px;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(212,175,55,0.3);
+      transition: all 0.2s ease;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+    .btn-print:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 14px rgba(212,175,55,0.45);
     }
     .page-sheet {
       width: 210mm;
       min-height: 297mm;
-      margin: 0 auto;
+      margin: 20px auto;
       box-sizing: border-box;
-      padding: 135px 50px 140px; /* Aligned inside Letter Hed.jpg */
-      background: url('Letter Hed.jpg') no-repeat center top;
+      /* Top padding 240px leaves generous clearance below Letter Hed.jpg pre-printed artwork */
+      padding: 240px 52px 100px;
+      background: #FFFFFF url('Letter Hed.jpg') no-repeat center top;
       background-size: 100% 100%;
       position: relative;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.12);
     }
+
     .doc-header {
       display: flex;
       justify-content: space-between;
+      align-items: flex-end;
       border-bottom: 2px solid #D4AF37;
-      padding-bottom: 12px;
-      margin-bottom: 20px;
+      padding-bottom: 14px;
+      margin-bottom: 22px;
     }
     .doc-title {
-      font-size: 22px;
+      font-family: 'Cinzel', Georgia, serif;
+      font-size: 20px;
       font-weight: 800;
-      color: #000;
-      letter-spacing: 0.5px;
+      color: #0F172A;
+      letter-spacing: 1px;
+      line-height: 1.2;
     }
     .doc-sub {
       font-size: 11px;
-      color: #666;
-      margin-top: 3px;
+      font-weight: 600;
+      color: #8892B0;
+      letter-spacing: 1px;
+      margin-top: 4px;
+      text-transform: uppercase;
     }
     .doc-meta {
       text-align: right;
       font-size: 12px;
-      line-height: 1.5;
+      line-height: 1.6;
     }
-    .doc-meta strong { color: #000; }
-    .client-details-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-      background: #F9F9FA;
-      border: 1px solid #E5E7EB;
-      border-radius: 6px;
+    .doc-meta-ref {
+      font-family: 'Cinzel', Georgia, serif;
+      font-weight: 700;
+      color: #0F172A;
+      font-size: 13px;
+    }
+    .doc-meta-date {
+      color: #64748B;
+      font-weight: 500;
+      font-size: 11.5px;
+    }
+
+    /* Client Dossier Card */
+    .client-details-card {
+      background: #FAFAF9;
+      border: 1px solid #E2E8F0;
+      border-top: 3px solid #D4AF37;
+      border-radius: 8px;
       padding: 14px 18px;
-      margin-bottom: 24px;
-      font-size: 12.5px;
+      margin-bottom: 22px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.02);
     }
-    .detail-item strong { color: #111; display: block; font-size: 11px; text-transform: uppercase; color: #888; }
-    .detail-item span { font-weight: 600; color: #000; font-size: 13px; }
-    
+    .client-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+    }
+    .client-item strong {
+      display: block;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: #64748B;
+      margin-bottom: 3px;
+    }
+    .client-item span {
+      font-weight: 700;
+      color: #0F172A;
+      font-size: 12.5px;
+      line-height: 1.35;
+      word-break: break-word;
+    }
+    .secondary-events-row {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px dashed #E2E8F0;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+    }
+
+    /* Table */
     table.invoice-table {
       width: 100%;
       border-collapse: collapse;
-      margin-bottom: 24px;
-      font-size: 13px;
+      margin-bottom: 22px;
+      font-size: 12.5px;
     }
-    table.invoice-table th {
-      background: #111;
+    table.invoice-table thead th {
+      background: #0F172A;
       color: #D4AF37;
+      font-family: 'Cinzel', Georgia, serif;
       text-align: left;
-      padding: 10px 14px;
-      font-size: 12px;
+      padding: 11px 14px;
+      font-size: 11px;
+      font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.8px;
+      border-top: 2px solid #D4AF37;
+      border-bottom: 2px solid #D4AF37;
     }
-    table.invoice-table td {
+    table.invoice-table tbody td {
       padding: 10px 14px;
-      border-bottom: 1px solid #E5E7EB;
+      border-bottom: 1px solid #E2E8F0;
+      color: #334155;
+      vertical-align: middle;
     }
-    table.invoice-table tr:nth-child(even) td {
-      background: #FAFBFD;
+    table.invoice-table tbody tr:nth-child(even) td {
+      background: #F8FAFC;
+    }
+    table.invoice-table tbody tr:last-child td {
+      border-bottom: 2px solid #CBD5E1;
+    }
+    .item-idx {
+      width: 32px;
+      color: #94A3B8;
+      font-weight: 600;
+      font-size: 11px;
+    }
+    .item-desc {
+      font-weight: 600;
+      color: #0F172A;
+    }
+    .item-amount {
+      text-align: right;
+      width: 140px;
+      font-weight: 700;
+      color: #0F172A;
+    }
+
+    /* Totals Box */
+    .totals-wrap {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 20px;
     }
     .totals-box {
-      float: right;
-      width: 320px;
-      margin-bottom: 20px;
+      width: 350px;
+      background: #FAFAF9;
+      border: 1px solid #E2E8F0;
+      border-radius: 8px;
+      padding: 14px 18px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.02);
     }
     .total-line {
       display: flex;
       justify-content: space-between;
+      align-items: center;
       padding: 6px 0;
-      font-size: 13px;
+      font-size: 12.5px;
+      color: #475569;
     }
-    .total-line.bold {
+    .total-line.total-main {
+      font-family: 'Cinzel', Georgia, serif;
       font-weight: 800;
-      font-size: 16px;
-      border-top: 2px solid #111;
+      font-size: 15px;
+      color: #0F172A;
+      border-top: 2px solid #0F172A;
       padding-top: 10px;
-      color: #000;
+      margin-top: 6px;
     }
     .total-line.advance {
-      color: #10B981;
+      color: #047857;
       font-weight: 700;
     }
     .total-line.balance {
-      color: #B45309;
-      font-weight: 700;
+      font-weight: 800;
       font-size: 14px;
+      color: #B45309;
+      border-top: 1px dashed #CBD5E1;
+      padding-top: 8px;
+      margin-top: 6px;
     }
-    .clear { clear: both; }
-    .payment-instructions {
-      background: #FEF3C7;
-      border: 1px solid #F59E0B;
-      border-radius: 6px;
+    .total-line.settled {
+      color: #047857;
+    }
+
+    /* Bank & Signature Grid */
+    .bottom-section-grid {
+      display: grid;
+      grid-template-columns: 1.6fr 1.1fr;
+      gap: 16px;
+      margin-top: 10px;
+      clear: both;
+    }
+    .bank-card {
+      background: #FAFAF9;
+      border: 1px solid #E2E8F0;
+      border-left: 4px solid #D4AF37;
+      border-radius: 8px;
       padding: 12px 16px;
-      font-size: 12px;
-      line-height: 1.5;
-      margin-top: 20px;
+    }
+    .bank-title {
+      font-family: 'Cinzel', Georgia, serif;
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #0F172A;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
     .bank-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 10px;
-      margin-top: 6px;
-      font-size: 11.5px;
+      font-size: 11px;
+      line-height: 1.45;
     }
-    .print-bar {
-      background: #111;
-      color: #fff;
-      padding: 12px 20px;
-      text-align: center;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 16px;
+    .bank-item {
+      background: #FFFFFF;
+      border: 1px solid #E2E8F0;
+      border-radius: 6px;
+      padding: 8px 10px;
     }
-    .btn-print {
-      background: #D4AF37;
-      border: none;
-      color: #000;
+    .bank-item strong {
+      color: #0F172A;
       font-weight: 700;
-      padding: 8px 24px;
-      border-radius: 20px;
-      cursor: pointer;
-      font-size: 14px;
+      display: block;
+      margin-bottom: 2px;
     }
+    .bank-note {
+      margin-top: 8px;
+      font-size: 10px;
+      color: #64748B;
+      line-height: 1.4;
+    }
+
+    /* Studio Signatory / Seal */
+    .signatory-card {
+      background: #FAFAF9;
+      border: 1px solid #E2E8F0;
+      border-radius: 8px;
+      padding: 12px 16px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      text-align: center;
+    }
+    .seal-badge {
+      font-family: 'Cinzel', Georgia, serif;
+      font-size: 10px;
+      font-weight: 700;
+      color: #AA8010;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    .sig-line {
+      margin: 18px auto 6px;
+      width: 75%;
+      border-bottom: 1.5px solid #0F172A;
+    }
+    .sig-name {
+      font-family: 'Cinzel', Georgia, serif;
+      font-size: 12px;
+      font-weight: 800;
+      color: #0F172A;
+      letter-spacing: 0.5px;
+    }
+    .sig-role {
+      font-size: 9.5px;
+      color: #64748B;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
     @media print {
-      .print-bar { display: none; }
-      body { background: transparent; }
+      body {
+        background: transparent;
+      }
+      .print-bar {
+        display: none !important;
+      }
+      .page-sheet {
+        margin: 0 !important;
+        box-shadow: none !important;
+        /* Exact print padding ensuring flawless alignment with Letter Hed.jpg */
+        padding: 240px 52px 100px !important;
+        width: 210mm !important;
+        min-height: 297mm !important;
+      }
     }
   </style>
 </head>
 <body>
   <div class="print-bar">
-    <span>Click the button to download or print this official document: </span>
+    <span>Official OCTEWYA Letterhead Document ready to print or export:</span>
     <button class="btn-print" onclick="window.print()">Print / Save as PDF</button>
   </div>
 
@@ -270,91 +480,118 @@ function printQuotation(type, customBooking) {
         <div class="doc-sub">OCTEWYA WEDDING CINEMATOGRAPHY • DASUN KAVINDA</div>
       </div>
       <div class="doc-meta">
-        <div><strong>Ref:</strong> ${docRef}</div>
-        <div><strong>Date:</strong> ${new Date().toLocaleDateString('en-GB')}</div>
-        <div style="margin-top: 4px;">${statusBadgeHtml}</div>
+        <div class="doc-meta-ref">Ref: ${docRef}</div>
+        <div class="doc-meta-date">Date: ${new Date().toLocaleDateString('en-GB')}</div>
+        <div style="margin-top: 5px;">${statusBadgeHtml}</div>
       </div>
     </div>
 
-    <div class="client-details-grid">
-      <div class="detail-item">
-        <strong>CLIENT / COUPLE</strong>
-        <span>${booking.coupleTitle}</span>
+    <div class="client-details-card">
+      <div class="client-grid">
+        <div class="client-item">
+          <strong>Client / Couple</strong>
+          <span>${booking.coupleTitle}</span>
+        </div>
+        <div class="client-item">
+          <strong>Wedding Date</strong>
+          <span>${booking.weddingDate}</span>
+        </div>
+        <div class="client-item">
+          <strong>Primary Venue</strong>
+          <span>${booking.weddingLocation}</span>
+        </div>
+        <div class="client-item">
+          <strong>PRIMARY WHATSAPP (UPDATES)</strong>
+          <span>${primaryPhone}</span>
+        </div>
       </div>
-      <div class="detail-item">
-        <strong>WEDDING DATE</strong>
-        <span>${booking.weddingDate}</span>
-      </div>
-      <div class="detail-item">
-        <strong>VENUE / LOCATION</strong>
-        <span>${booking.weddingLocation}</span>
-      </div>
-      <div class="detail-item">
-        <strong>PRIMARY WHATSAPP (UPDATES)</strong>
-        <span>${primaryPhone}</span>
-      </div>
-      ${booking.homecomingDate ? `
-      <div class="detail-item">
-        <strong>HOMECOMING DATE & VENUE</strong>
-        <span>${booking.homecomingDate} - ${booking.homecomingLocation || booking.weddingLocation}</span>
-      </div>` : ''}
-      ${booking.preshootDate ? `
-      <div class="detail-item">
-        <strong>PRE-SHOOT DATE & LOCATION</strong>
-        <span>${booking.preshootDate} - ${booking.preshootLocation || 'TBD'}</span>
+
+      ${(booking.homecomingDate || booking.preshootDate) ? `
+      <div class="secondary-events-row">
+        ${booking.homecomingDate ? `
+        <div class="client-item">
+          <strong>Homecoming Date & Venue</strong>
+          <span>${booking.homecomingDate} • ${booking.homecomingLocation || booking.weddingLocation}</span>
+        </div>` : ''}
+        ${booking.preshootDate ? `
+        <div class="client-item">
+          <strong>Pre-Shoot Date & Location</strong>
+          <span>${booking.preshootDate} • ${booking.preshootLocation || 'Studio Choice'}</span>
+        </div>` : ''}
       </div>` : ''}
     </div>
 
     <table class="invoice-table">
       <thead>
         <tr>
+          <th class="item-idx">#</th>
           <th>Description of Service</th>
           <th style="text-align: right; width: 140px;">Amount (LKR)</th>
         </tr>
       </thead>
       <tbody>
-        ${items.map(it => `
+        ${items.map((it, idx) => `
           <tr>
-            <td><strong>${it.name}</strong></td>
-            <td style="text-align: right;">${Number(it.price).toLocaleString()} LKR</td>
+            <td class="item-idx">${String(idx + 1).padStart(2, '0')}</td>
+            <td class="item-desc">${it.name}</td>
+            <td class="item-amount">${Number(it.price).toLocaleString()} LKR</td>
           </tr>
         `).join("")}
       </tbody>
     </table>
 
-    <div class="totals-box">
-      <div class="total-line bold">
-        <span>Total Package Value:</span>
-        <span>${Number(booking.totalAmount).toLocaleString()} LKR</span>
-      </div>
-      <div class="total-line advance">
-        <span>Advance Paid ${isAdvanceVerified ? '(Verified ✓)' : '(Pending Verification)'}:</span>
-        <span>${isAdvanceVerified ? `- ${Number(booking.advancePaid).toLocaleString()} LKR` : `0 LKR (${Number(booking.advancePaid).toLocaleString()} LKR Pending)`}</span>
-      </div>
-      <div class="total-line balance">
-        <span>Remaining Balance Due:</span>
-        <span>${isFullSettled ? '0 LKR (SETTLED ✓)' : `${Number(isAdvanceVerified ? booking.balanceDue : booking.totalAmount).toLocaleString()} LKR`}</span>
+    <div class="totals-wrap">
+      <div class="totals-box">
+        <div class="total-line">
+          <span>Subtotal & Selected Services:</span>
+          <strong>${Number(booking.totalAmount).toLocaleString()} LKR</strong>
+        </div>
+        <div class="total-line advance">
+          <span>Advance Paid ${isAdvanceVerified ? '(Verified ✓)' : '(Pending Verification)'}:</span>
+          <strong>${isAdvanceVerified ? `- ${Number(booking.advancePaid).toLocaleString()} LKR` : `0 LKR (${Number(booking.advancePaid).toLocaleString()} LKR Pending)`}</strong>
+        </div>
+        <div class="total-line ${isFullSettled ? 'balance settled' : 'balance'}">
+          <span>${isFullSettled ? 'Settlement Status:' : 'Remaining Balance Due:'}</span>
+          <span>${isFullSettled ? '<span style="color:#047857;">0 LKR (SETTLED ✓)</span>' : `${Number(isAdvanceVerified ? booking.balanceDue : booking.totalAmount).toLocaleString()} LKR`}</span>
+        </div>
+        <div class="total-line total-main">
+          <span>Total Package Value:</span>
+          <span>${Number(booking.totalAmount).toLocaleString()} LKR</span>
+        </div>
       </div>
     </div>
 
-    <div class="clear"></div>
-
-    <div class="payment-instructions">
-      <strong>Payment & Bank Details:</strong>
-      <div class="bank-grid">
-        <div>
-          <strong>Sampath Bank:</strong><br>
-          Account: 103357000115 (Ratnapura)<br>
-          Name: K A D K Piyatissa
+    <div class="bottom-section-grid">
+      <div class="bank-card">
+        <div class="bank-title">Payment & Direct Bank Transfer Details</div>
+        <div class="bank-grid">
+          <div class="bank-item">
+            <strong>Sampath Bank</strong>
+            Account: <strong>103357000115</strong><br>
+            Branch: Ratnapura Super Branch<br>
+            Name: K A D K Piyatissa
+          </div>
+          <div class="bank-item">
+            <strong>Bank of Ceylon (BOC)</strong>
+            Account: <strong>94413255</strong><br>
+            Branch: Eheliyagoda Branch<br>
+            Name: K A D K Piyatissa
+          </div>
         </div>
-        <div>
-          <strong>Bank of Ceylon (BOC):</strong><br>
-          Account: 94413255 (Eheliyagoda)<br>
-          Name: K A D K Piyatissa
+        <div class="bank-note">
+          * Full payment must be settled at least 3 days prior to the wedding event.<br>
+          * Official inquiries & payment confirmation: <strong>Dasun Kavinda (071 4 277 276)</strong>.
         </div>
       </div>
-      <div style="margin-top: 6px; font-size: 11px; color: #555;">
-        * Note: Full payment must be made at least 3 days prior to the wedding event. Inquiries: Dasun Kavinda (071 4 277 276).
+
+      <div class="signatory-card">
+        <div class="seal-badge">Official Studio Seal</div>
+        <div>
+          <div class="sig-line"></div>
+          <div class="sig-name">DASUN KAVINDA</div>
+          <div class="sig-role">Managing Director & Lead Cinematographer</div>
+          <div style="font-size: 9px; color: #94A3B8; margin-top: 3px;">OCTEWYA CINEMATOGRAPHY</div>
+        </div>
       </div>
     </div>
   </div>
