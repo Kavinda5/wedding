@@ -1878,15 +1878,21 @@ function loadAdminData() {
   const mgmtGrid = document.querySelector(".admin-management-grid");
   const coupleLabel = document.getElementById("adminActiveCoupleLabel");
   const consoleTitle = document.getElementById("consoleCoupleTitle");
+  const dossierCard = document.getElementById("adminServicesOverviewCard");
 
   if (!activeBooking) {
     if (coupleLabel) coupleLabel.textContent = "Active: None";
     if (consoleTitle) consoleTitle.textContent = "Select a booking";
     if (mgmtGrid) mgmtGrid.style.display = "none";
+    if (dossierCard) dossierCard.style.display = "none";
     return;
   }
 
   if (mgmtGrid) mgmtGrid.style.display = "grid";
+  if (dossierCard) {
+    dossierCard.style.display = "block";
+    renderAdminDossier(activeBooking);
+  }
   if (coupleLabel) coupleLabel.textContent = `Active: ${activeBooking.coupleTitle}`;
   if (consoleTitle) consoleTitle.textContent = `${activeBooking.coupleTitle} (${activeBooking.id})`;
 
@@ -2064,7 +2070,17 @@ function renderAdminTable(bookingsList) {
         <small style="color: var(--text-muted);"><i class="fa-brands fa-whatsapp"></i> ${b.primaryPhone || b.bridePhone}</small>
       </td>
       <td>${b.weddingDate}</td>
-      <td>${getBookingPrimaryPackageName(b)}</td>
+      <td>
+        <strong style="color: #fff;">${getBookingPrimaryPackageName(b)}</strong>
+        <div style="margin-top: 4px; display: flex; flex-wrap: wrap; gap: 4px;">
+          ${b.selectedHomecoming ? '<span class="badge-gold" style="font-size: 9.5px; padding: 2px 6px;">+Homecoming</span>' : ''}
+          ${b.selectedEngagement ? '<span class="badge-gold" style="font-size: 9.5px; padding: 2px 6px;">+Engagement</span>' : ''}
+          ${b.selectedPreshoot ? '<span class="badge-gold" style="font-size: 9.5px; padding: 2px 6px;">+Pre-Shoot</span>' : ''}
+          ${b.selectedAddons?.length > 0 ? `<span class="badge-gold" style="font-size: 9.5px; padding: 2px 6px;">+${b.selectedAddons.length} Addons</span>` : ''}
+          ${b.expressDeliveryAccepted ? '<span class="vip-tag" style="font-size: 9.5px; padding: 2px 6px;"><i class="fa-solid fa-bolt"></i> Fast-Track</span>' : ''}
+          ${b.travelCharges?.enabled && b.travelCharges.totalTravelCost > 0 ? '<span class="badge-gold" style="font-size: 9.5px; padding: 2px 6px;"><i class="fa-solid fa-car"></i> Travel</span>' : ''}
+        </div>
+      </td>
       <td>
         <span>${formatLKR(b.totalAmount)}</span> / 
         <span style="color: ${b.isAdvanceVerified ? 'var(--accent-green)' : '#ffc107'};">${formatLKR(b.advancePaid)} ${b.isAdvanceVerified ? '✓' : '⏳'}</span> / 
@@ -2115,7 +2131,236 @@ function handleAdminFilter(status) {
 function selectBookingFromAdmin(bookingId) {
   currentBookingId = bookingId;
   loadAdminData();
-  showToast("Loaded Booking", `Switched to manage ${getActiveBooking().coupleTitle}`);
+  const dossier = document.getElementById("adminServicesOverviewCard");
+  if (dossier) {
+    dossier.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  showToast("Loaded Booking", `Switched to manage ${getActiveBooking()?.coupleTitle}`);
+}
+
+function renderAdminDossier(booking) {
+  if (!booking) return;
+
+  const titleEl = document.getElementById("dossierCoupleTitle");
+  if (titleEl) {
+    titleEl.textContent = `${booking.coupleTitle} (${booking.id})`;
+  }
+
+  // 1. Services List
+  const sList = document.getElementById("adminServicesList");
+  if (sList) {
+    const items = [];
+
+    // Main Package
+    if (booking.isCustomPackage) {
+      const customSub = (booking.customPackageItems || []).map(cp => 
+        `<div style="font-size: 11.5px; color: #ccc; margin-left: 12px; margin-top: 2px;">• ${cp.name}: <strong class="gold">${formatLKR(cp.price)} LKR</strong></div>`
+      ).join("");
+      items.push(`
+        <li style="border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 6px;">
+          <div style="display: flex; justify-content: space-between;">
+            <strong style="color: #fff;"><i class="fa-solid fa-sliders" style="color: var(--gold);"></i> Custom Package</strong>
+            <span class="gold" style="font-weight: 700;">${formatLKR(booking.basePackageTotal || booking.totalAmount)} LKR</span>
+          </div>
+          ${customSub}
+        </li>
+      `);
+    } else if (booking.selectedPackage) {
+      items.push(`
+        <li style="border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 6px; display: flex; justify-content: space-between;">
+          <strong style="color: #fff;"><i class="fa-solid fa-crown" style="color: var(--gold);"></i> ${booking.selectedPackage.name}</strong>
+          <span class="gold" style="font-weight: 700;">${formatLKR(booking.selectedPackage.price)} LKR</span>
+        </li>
+      `);
+    }
+
+    // Homecoming
+    if (booking.selectedHomecoming) {
+      items.push(`
+        <li style="border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 6px; display: flex; justify-content: space-between;">
+          <strong style="color: #fff;"><i class="fa-solid fa-house-chimney-window" style="color: #64b5f6;"></i> ${booking.selectedHomecoming.name}</strong>
+          <span class="gold" style="font-weight: 700;">+${formatLKR(booking.selectedHomecoming.price)} LKR</span>
+        </li>
+      `);
+    }
+
+    // Engagement
+    if (booking.selectedEngagement) {
+      items.push(`
+        <li style="border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 6px; display: flex; justify-content: space-between;">
+          <strong style="color: #fff;"><i class="fa-solid fa-ring" style="color: #ffb74d;"></i> ${booking.selectedEngagement.name}</strong>
+          <span class="gold" style="font-weight: 700;">+${formatLKR(booking.selectedEngagement.price)} LKR</span>
+        </li>
+      `);
+    }
+
+    // Pre-Shoot
+    if (booking.selectedPreshoot) {
+      items.push(`
+        <li style="border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 6px; display: flex; justify-content: space-between;">
+          <strong style="color: #fff;"><i class="fa-solid fa-video" style="color: #81c784;"></i> ${booking.selectedPreshoot.name}</strong>
+          <span class="gold" style="font-weight: 700;">+${formatLKR(booking.selectedPreshoot.price)} LKR</span>
+        </li>
+      `);
+    }
+
+    // Addons
+    if (booking.selectedAddons && booking.selectedAddons.length > 0) {
+      booking.selectedAddons.forEach(a => {
+        items.push(`
+          <li style="border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 6px; display: flex; justify-content: space-between;">
+            <span style="color: #eee;"><i class="fa-solid fa-plus-circle" style="color: var(--gold);"></i> ${a.name}</span>
+            <span class="gold" style="font-weight: 700;">+${formatLKR(a.price)} LKR</span>
+          </li>
+        `);
+      });
+    }
+
+    // Super Fast Editing Service
+    if (booking.expressDeliveryAccepted) {
+      const isPkg3 = booking.selectedPackage?.id === "pkg_03" || booking.selectedPackage?.id === "pkg_vip";
+      const expCost = booking.expressDeliveryFee || (isPkg3 ? 15000 : 10000);
+      items.push(`
+        <li style="border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 6px; display: flex; justify-content: space-between; align-items: center;">
+          <span class="vip-tag" style="font-size: 11px; padding: 3px 8px;"><i class="fa-solid fa-bolt"></i> Super Fast Editing Service (${isPkg3 ? '3 Days' : '2 Days'})</span>
+          <span class="gold" style="font-weight: 700;">+${formatLKR(expCost)} LKR</span>
+        </li>
+      `);
+    }
+
+    // Travel Charges
+    if (booking.travelCharges && booking.travelCharges.enabled && booking.travelCharges.totalTravelCost > 0) {
+      const tc = booking.travelCharges;
+      const tLines = [];
+      if (tc.weddingCost > 0) tLines.push(`Wedding: ${tc.weddingKm}km (${formatLKR(tc.weddingCost)} LKR)`);
+      if (tc.homecomingCost > 0) tLines.push(`Homecoming: ${tc.homecomingKm}km (${formatLKR(tc.homecomingCost)} LKR)`);
+      if (tc.preshootCost > 0) tLines.push(`Pre-shoot: ${tc.preshootKm}km (${formatLKR(tc.preshootCost)} LKR)`);
+      if (tc.robeCost > 0) tLines.push(`ROBE: ${tc.robeKm}km (${formatLKR(tc.robeCost)} LKR)`);
+      if (tc.engagementCost > 0) tLines.push(`Engagement: ${tc.engagementKm}km (${formatLKR(tc.engagementCost)} LKR)`);
+
+      items.push(`
+        <li style="border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 6px;">
+          <div style="display: flex; justify-content: space-between;">
+            <strong style="color: #fff;"><i class="fa-solid fa-car" style="color: var(--gold);"></i> Travel Charges (@ 80 LKR/km)</strong>
+            <span class="gold" style="font-weight: 700;">+${formatLKR(tc.totalTravelCost)} LKR</span>
+          </div>
+          <div style="font-size: 11px; color: var(--text-muted); margin-top: 3px;">${tLines.join(" | ")}</div>
+        </li>
+      `);
+    }
+
+    if (items.length === 0) {
+      sList.innerHTML = `<li style="color: var(--text-muted); font-size: 12px;">කිසිදු සේවාවක් තෝරාගෙන නැත (No services selected)</li>`;
+    } else {
+      sList.innerHTML = items.join("");
+    }
+  }
+
+  // 2. Dates & Venues List
+  const dList = document.getElementById("adminDatesVenuesList");
+  if (dList) {
+    dList.innerHTML = `
+      <div style="padding-bottom: 6px; border-bottom: 1px solid rgba(255,255,255,0.05);">
+        <strong style="color: var(--gold); display: block;"><i class="fa-solid fa-calendar-day"></i> Wedding Day:</strong>
+        <span style="color: #fff; font-weight: 700;">${booking.weddingDate || 'නැත (Not Set)'}</span>
+        <div style="color: var(--text-muted); font-size: 11.5px;"><i class="fa-solid fa-location-dot"></i> ${booking.weddingLocation || 'ස්ථානය සඳහන් කර නැත'}</div>
+      </div>
+
+      ${(booking.selectedHomecoming || booking.homecomingDate) ? `
+      <div style="padding-bottom: 6px; border-bottom: 1px solid rgba(255,255,255,0.05);">
+        <strong style="color: #64b5f6; display: block;"><i class="fa-solid fa-house-chimney-window"></i> Homecoming Day:</strong>
+        <span style="color: #fff; font-weight: 700;">${booking.homecomingDate || 'දිනය තවම තීරණය කර නැත'}</span>
+        <div style="color: var(--text-muted); font-size: 11.5px;"><i class="fa-solid fa-location-arrow"></i> ${booking.homecomingLocation || 'ස්ථානය සඳහන් කර නැත'}</div>
+      </div>
+      ` : ''}
+
+      ${(booking.selectedPreshoot || booking.preshootDate) ? `
+      <div style="padding-bottom: 6px; border-bottom: 1px solid rgba(255,255,255,0.05);">
+        <strong style="color: #81c784; display: block;"><i class="fa-solid fa-clapperboard"></i> Pre-Shoot Session:</strong>
+        <span style="color: #fff; font-weight: 700;">${booking.preshootDate || 'තවම තීරණය කර නැත (Pending)'}</span>
+        <div style="color: var(--text-muted); font-size: 11.5px;"><i class="fa-solid fa-map-pin"></i> ${booking.preshootLocation || 'ස්ථානය තවම තීරණය කර නැත'}</div>
+      </div>
+      ` : ''}
+
+      <div style="padding-top: 4px;">
+        <strong style="color: var(--gold-light); display: block;"><i class="fa-solid fa-box-open"></i> Final Delivery Method:</strong>
+        <span style="color: #eee;">
+          ${booking.deliveryPreference === 'usb' ? '🚚 USB Flash Drive via Courier' : (booking.deliveryPreference === 'cloud' ? '☁️ Google Cloud Drive (Online)' : '⏳ පාරිභෝගිකයා තවම තෝරා නැත')}
+        </span>
+        ${booking.courierAddress ? `<div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">📍 ${booking.courierAddress}</div>` : ''}
+      </div>
+    `;
+  }
+
+  // Client Special Notes
+  const nBox = document.getElementById("adminClientNotesBox");
+  if (nBox) {
+    if (booking.notes && booking.notes.trim()) {
+      nBox.innerHTML = `
+        <div style="font-size: 11.5px; color: var(--gold); font-weight: 700; margin-bottom: 4px;">
+          <i class="fa-solid fa-comment-dots"></i> Client Special Requests / Notes:
+        </div>
+        <div style="font-size: 12px; color: #fff; background: rgba(0,0,0,0.3); padding: 8px 10px; border-radius: 4px; border-left: 2px solid var(--gold); line-height: 1.5;">
+          "${booking.notes}"
+        </div>
+      `;
+    } else {
+      nBox.innerHTML = `<span style="color: var(--text-muted); font-size: 11.5px;"><i class="fa-solid fa-comment-slash"></i> කිසිදු විශේෂ සටහනක් නැත (No special notes)</span>`;
+    }
+  }
+
+  // 3. Contacts & Financials
+  const fBox = document.getElementById("adminClientFinancialBox");
+  if (fBox) {
+    let advBadge = '<span class="badge-warning" style="font-size: 10px;">⏳ Waiting for Review</span>';
+    if (booking.isAdvanceVerified) advBadge = '<span class="badge-success" style="font-size: 10px;">✓ Verified & Confirmed</span>';
+    else if (booking.isAdvanceRejected) advBadge = '<span class="badge-danger" style="font-size: 10px;">✗ Rejected</span>';
+
+    const pPhone = booking.primaryPhone || booking.bridePhone || booking.groomPhone;
+    const cleanPhone = (pPhone || '').replace(/\D/g, '');
+
+    fBox.innerHTML = `
+      <div style="padding-bottom: 6px; border-bottom: 1px solid rgba(255,255,255,0.05);">
+        <div><strong>Bride:</strong> ${booking.brideName || 'Bride'} (<a href="tel:${booking.bridePhone}" style="color: #64b5f6;">${booking.bridePhone}</a>)</div>
+        <div><strong>Groom:</strong> ${booking.groomName || 'Groom'} (<a href="tel:${booking.groomPhone}" style="color: #64b5f6;">${booking.groomPhone}</a>)</div>
+        <div style="margin-top: 4px;">
+          <i class="fa-brands fa-whatsapp" style="color: #25D366;"></i> <strong>Primary WhatsApp:</strong> 
+          <span style="color: #fff;">${pPhone}</span>
+          <a href="https://api.whatsapp.com/send?phone=${cleanPhone.startsWith('0') ? '94' + cleanPhone.slice(1) : cleanPhone}" target="_blank" class="btn-success-sm" style="padding: 2px 7px; font-size: 10px; margin-left: 6px; text-decoration: none;">Chat</a>
+        </div>
+      </div>
+
+      <div style="padding-top: 6px;">
+        <div style="display: flex; justify-content: space-between;">
+          <span style="color: var(--text-muted);">Total Package Value:</span>
+          <strong style="color: #fff; font-size: 14px;">${formatLKR(booking.totalAmount)} LKR</strong>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
+          <span style="color: var(--text-muted);">Advance Paid:</span>
+          <div>
+            <strong style="color: var(--accent-green);">${formatLKR(booking.advancePaid)} LKR</strong>
+            ${advBadge}
+          </div>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-top: 4px; padding-top: 4px; border-top: 1px solid rgba(255,255,255,0.06);">
+          <span style="color: var(--gold); font-weight: 700;">Remaining Balance:</span>
+          <strong class="gold" style="font-size: 15px;">${formatLKR(booking.balanceDue)} LKR</strong>
+        </div>
+      </div>
+    `;
+  }
+}
+
+function printActiveLetterheadQuotation() {
+  const booking = getActiveBooking();
+  if (!booking) return alert("Please select a booking first!");
+  printQuotation(booking);
+}
+
+function printActiveLetterheadInvoice() {
+  const booking = getActiveBooking();
+  if (!booking) return alert("Please select a booking first!");
+  generateLetterheadInvoice(booking, booking.isFullPaid ? 'full' : 'advance');
 }
 
 function renderAdminStepButtons(containerId, activeStep, onStepClick) {

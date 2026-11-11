@@ -1574,7 +1574,7 @@ input:checked + .slider:before { transform: translateX(22px); background-color: 
 
 /* Responsive */
 @media (max-width: 1024px) {
-  .booking-layout, .admin-management-grid { grid-template-columns: 1fr; }
+  .booking-layout, .admin-management-grid, #adminDossierGrid { grid-template-columns: 1fr !important; }
   .booking-sidebar { position: static; }
   .pipeline-stepper { grid-template-columns: repeat(3, 1fr); }
   .bank-accounts-wrap { grid-template-columns: 1fr; }

@@ -154,6 +154,70 @@
           </div>
         </div>
 
+        <!-- ACTIVE BOOKING: CUSTOMER REQUESTED SERVICES & DETAILS DOSSIER -->
+        <div class="admin-card mt-4" id="adminServicesOverviewCard" style="display: none; border: 1px solid var(--border-gold); background: linear-gradient(180deg, rgba(212,175,55,0.06) 0%, rgba(20,24,38,0.96) 100%);">
+          <div class="admin-card-header" style="border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 12px; margin-bottom: 16px;">
+            <div>
+              <span class="badge-gold" style="font-size: 11px; margin-bottom: 6px; display: inline-block;">
+                <i class="fa-solid fa-clipboard-list"></i> CLIENT ORDER DOSSIER
+              </span>
+              <h3 style="color: #fff; font-size: 19px; margin: 0; display: flex; align-items: center; gap: 8px;">
+                <i class="fa-solid fa-film" style="color: var(--gold);"></i> 
+                <span id="dossierCoupleTitle">Customer Requested Services</span>
+              </h3>
+              <p style="font-size: 12px; color: var(--text-muted); margin: 4px 0 0;">
+                පාරිභෝගිකයා විසින් තෝරාගත් පැකේජ, අමතර සේවාවන් (Add-ons), උත්සව දින සහ විශේෂ සටහන් (Notes) සවිස්තරව පහතින්:
+              </p>
+            </div>
+            <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+              <button type="button" class="btn-outline-gold" style="font-size: 12px; padding: 7px 14px;" onclick="printActiveLetterheadQuotation()">
+                <i class="fa-solid fa-print"></i> Quotation PDF
+              </button>
+              <button type="button" class="btn-gold-sm" style="font-size: 12px; padding: 7px 14px;" onclick="printActiveLetterheadInvoice()">
+                <i class="fa-solid fa-file-invoice"></i> Letterhead Invoice
+              </button>
+            </div>
+          </div>
+
+          <!-- 3-Column Detailed Breakdown -->
+          <div style="display: grid; grid-template-columns: 1.25fr 1fr 1fr; gap: 16px;" id="adminDossierGrid">
+            
+            <!-- Box 1: Requested Services & Add-ons -->
+            <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 8px; padding: 14px;">
+              <h4 style="font-size: 13px; color: var(--gold); margin: 0 0 10px; display: flex; align-items: center; gap: 6px;">
+                <i class="fa-solid fa-layer-group"></i> තෝරාගත් සේවාවන් (Requested Services)
+              </h4>
+              <ul id="adminServicesList" style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px;">
+                <!-- Populated by JS -->
+              </ul>
+            </div>
+
+            <!-- Box 2: Event Dates, Venues & Client Notes -->
+            <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 8px; padding: 14px;">
+              <h4 style="font-size: 13px; color: var(--gold); margin: 0 0 10px; display: flex; align-items: center; gap: 6px;">
+                <i class="fa-solid fa-calendar-check"></i> උත්සව දින & ස්ථාන (Schedule & Locations)
+              </h4>
+              <div id="adminDatesVenuesList" style="display: flex; flex-direction: column; gap: 8px; font-size: 12.5px;">
+                <!-- Populated by JS -->
+              </div>
+              <div id="adminClientNotesBox" style="margin-top: 12px; padding-top: 10px; border-top: 1px dashed rgba(255,255,255,0.1);">
+                <!-- Special Notes -->
+              </div>
+            </div>
+
+            <!-- Box 3: Contacts & Financial Overview -->
+            <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 8px; padding: 14px;">
+              <h4 style="font-size: 13px; color: var(--gold); margin: 0 0 10px; display: flex; align-items: center; gap: 6px;">
+                <i class="fa-solid fa-address-book"></i> පාරිභෝගික තොරතුරු & මුදල් (Client & Finance)
+              </h4>
+              <div id="adminClientFinancialBox" style="display: flex; flex-direction: column; gap: 8px; font-size: 12.5px;">
+                <!-- Populated by JS -->
+              </div>
+            </div>
+
+          </div>
+        </div>
+
         <!-- ACTIVE BOOKING MANAGEMENT CONSOLE -->
         <div class="admin-management-grid mt-4">
           
