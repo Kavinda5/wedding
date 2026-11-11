@@ -359,9 +359,6 @@ function printQuotation(type, customBooking) {
 
     /* Bank & Signature Grid */
     .bottom-section-grid {
-      display: grid;
-      grid-template-columns: 1.6fr 1.1fr;
-      gap: 16px;
       margin-top: 10px;
       clear: both;
     }
@@ -410,44 +407,7 @@ function printQuotation(type, customBooking) {
       line-height: 1.4;
     }
 
-    /* Studio Signatory / Seal */
-    .signatory-card {
-      background: #FAFAF9;
-      border: 1px solid #E2E8F0;
-      border-radius: 8px;
-      padding: 12px 16px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      text-align: center;
-    }
-    .seal-badge {
-      font-family: 'Cinzel', Georgia, serif;
-      font-size: 10px;
-      font-weight: 700;
-      color: #AA8010;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-    }
-    .sig-line {
-      margin: 18px auto 6px;
-      width: 75%;
-      border-bottom: 1.5px solid #0F172A;
-    }
-    .sig-name {
-      font-family: 'Cinzel', Georgia, serif;
-      font-size: 12px;
-      font-weight: 800;
-      color: #0F172A;
-      letter-spacing: 0.5px;
-    }
-    .sig-role {
-      font-size: 9.5px;
-      color: #64748B;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
+
 
     @media print {
       body {
@@ -581,16 +541,6 @@ function printQuotation(type, customBooking) {
         <div class="bank-note">
           * Full payment must be settled at least 3 days prior to the wedding event.<br>
           * Official inquiries & payment confirmation: <strong>Dasun Kavinda (071 4 277 276)</strong>.
-        </div>
-      </div>
-
-      <div class="signatory-card">
-        <div class="seal-badge">Official Studio Seal</div>
-        <div>
-          <div class="sig-line"></div>
-          <div class="sig-name">DASUN KAVINDA</div>
-          <div class="sig-role">Managing Director & Lead Cinematographer</div>
-          <div style="font-size: 9px; color: #94A3B8; margin-top: 3px;">OCTEWYA CINEMATOGRAPHY</div>
         </div>
       </div>
     </div>
