@@ -25,7 +25,7 @@ const TERMS_AND_CONDITIONS = {
       },
       {
         title: "4. Travel & Outstation Charges",
-        text: "Travel charges will apply depending on the event location. Extra charges will be added if the venue is more than 50 km from Eheliyagoda."
+        text: "Travel charges will apply depending on the event location, calculated at 80 LKR per kilometer from Eheliyagoda (applicable for Wedding, Homecoming, Pre-shoot, ROBE shoot & Engagement sessions)."
       },
       {
         title: "5. Social Media Rights",
@@ -80,7 +80,7 @@ const TERMS_AND_CONDITIONS = {
       },
       {
         title: "04. ප්‍රවාහන හා දුරස්ථ ගාස්තු (Travel Charges)",
-        text: "මංගල උත්සවය පැවැත්වෙන ස්ථානය අනුව ප්‍රවාහන ගාස්තු අයවේ. ඇහැලියගොඩ සිට 50km ට වඩා වැඩි දුරක පිහිටි ස්ථාන සඳහා අමතර ගාස්තු එකතු වේ."
+        text: "උත්සවය පැවැත්වෙන ස්ථානය අනුව ඇහැලියගොඩ සිට එක් කිලෝමීටරයක් සඳහා 80 LKR බැගින් ප්‍රවාහන ගාස්තු අයවේ (Wedding, Homecoming, Pre-shoot, ROBE shoot සහ Engagement සැසි සඳහා අදාළ වේ)."
       },
       {
         title: "05. සමාජ මාධ්‍ය අයිතීන් (Social Media Rights)",

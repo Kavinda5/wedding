@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>OCTEWYA | Master Studio Operations & Production Portal - Dasun Kavinda</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <link rel="stylesheet" href="style.css?v=2.3">
+  <link rel="stylesheet" href="style.css?v=2.6">
 </head>
 <body>
 
@@ -50,9 +50,6 @@
         <a href="index.html" class="btn-outline-gold" target="_blank" style="padding: 6px 12px; font-size: 12px;" title="Open Public Client Page">
           <i class="fa-solid fa-arrow-up-right-from-square"></i> Client View
         </a>
-        <button type="button" class="btn-outline-light" onclick="adminResetAllBookings()" style="padding: 6px 12px; font-size: 12px; border-radius: 20px; color: #ff6b6b; border-color: rgba(255,107,107,0.4);" title="Clear / Reset All Bookings Data">
-          <i class="fa-solid fa-trash"></i> Reset Data
-        </button>
         <button type="button" class="btn-outline-light" onclick="adminLogout()" style="padding: 6px 12px; font-size: 12px; border-radius: 20px;" title="Lock Studio Admin">
           <i class="fa-solid fa-lock"></i> Lock
         </button>
@@ -192,36 +189,142 @@
               <h3><i class="fa-solid fa-cash-register"></i> Payment, Fast Delivery & Links</h3>
             </div>
 
-            <!-- Payment Verification & Paid Amount Adjustment -->
+            <!-- Advance Payment Verification & Actions -->
             <div class="admin-inner-box">
-              <h4 class="inner-title"><i class="fa-solid fa-file-invoice-dollar"></i> Payment Adjustment & Slip</h4>
+              <h4 class="inner-title"><i class="fa-solid fa-file-invoice-dollar"></i> Advance Slip & Booking Verification</h4>
               <div class="slip-review-box mt-2">
                 <div class="slip-thumb" onclick="openSlipModal()">
-                  <img id="adminSlipImg" src="" alt="Slip" onerror="this.src='https://placehold.co/400x250/222/c5a059?text=Bank+Slip'">
-                  <span class="zoom-tag"><i class="fa-solid fa-magnifying-glass-plus"></i> View Slip</span>
+                  <img id="adminSlipImg" src="" alt="Advance Slip" onerror="this.src='https://placehold.co/400x250/222/c5a059?text=Bank+Slip'">
+                  <span class="zoom-tag"><i class="fa-solid fa-magnifying-glass-plus"></i> View Advance Slip</span>
                 </div>
                 <div class="slip-details">
                   <div id="adminPaymentMetrics"></div>
                   
-                  <div class="mt-2" style="display: flex; gap: 8px; align-items: center;">
-                    <input type="number" id="adminEditPaidAmount" placeholder="Advance Paid" style="width: 140px; padding: 6px 10px; font-size: 13px;">
-                    <button class="btn-gold-sm" onclick="adminSaveCustomAdvance()"><i class="fa-solid fa-check"></i> Update Paid</button>
+                  <div class="btn-group-slip mt-2" style="display: flex; gap: 8px; flex-wrap: wrap;">
+                    <button class="btn-success-sm" onclick="adminVerifyPayment()"><i class="fa-solid fa-circle-check"></i> Verify Payment & Confirm</button>
+                    <button class="btn-danger-sm" onclick="adminRejectSlip('advance')"><i class="fa-solid fa-circle-xmark"></i> Reject Slip</button>
                   </div>
 
-                  <div class="btn-group-slip mt-2" style="display: flex; gap: 8px;">
-                    <button class="btn-success-sm" onclick="adminVerifyAdvance()"><i class="fa-solid fa-check-double"></i> Verify Slip</button>
-                    <button class="btn-gold-sm" onclick="adminMarkFullPaid()"><i class="fa-solid fa-coins"></i> Mark Full Paid</button>
+                  <div class="mt-2">
+                    <button type="button" class="btn-outline-gold" style="font-size: 11.5px; padding: 5px 10px;" onclick="sendInvoiceWhatsApp('advance')">
+                      <i class="fa-brands fa-whatsapp"></i> Send Letterhead Invoice
+                    </button>
                   </div>
                 </div>
               </div>
             </div>
 
-            <!-- Super Fast Delivery Availability Switch -->
+            <!-- Balance Settlement Slip Verification Box -->
+            <div class="admin-inner-box mt-3" id="adminBalanceVerificationBox">
+              <h4 class="inner-title"><i class="fa-solid fa-coins"></i> Balance Settlement & Slip</h4>
+              <div class="slip-review-box mt-2">
+                <div class="slip-thumb" onclick="openBalanceSlipModalAdmin()">
+                  <img id="adminBalanceSlipImg" src="" alt="Balance Slip" onerror="this.src='https://placehold.co/400x250/222/c5a059?text=No+Balance+Slip'">
+                  <span class="zoom-tag"><i class="fa-solid fa-magnifying-glass-plus"></i> View Balance Slip</span>
+                </div>
+                <div class="slip-details">
+                  <div id="adminBalanceMetrics"></div>
+
+                  <div class="btn-group-slip mt-2" style="display: flex; gap: 8px; flex-wrap: wrap;">
+                    <button class="btn-success-sm" onclick="adminVerifyFullPayment()"><i class="fa-solid fa-check-double"></i> Verify Full Settlement</button>
+                    <button class="btn-danger-sm" onclick="adminRejectSlip('balance')"><i class="fa-solid fa-circle-xmark"></i> Reject Slip</button>
+                  </div>
+
+                  <div class="mt-2">
+                    <button type="button" class="btn-outline-gold" style="font-size: 11.5px; padding: 5px 10px;" onclick="sendInvoiceWhatsApp('full')">
+                      <i class="fa-brands fa-whatsapp"></i> Send Settlement Invoice
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Travel & Outstation Charges Box (@ 80 LKR/km) -->
+            <div class="admin-inner-box mt-3" id="adminTravelChargesBox">
+              <div class="toggle-header">
+                <div>
+                  <h4 class="inner-title"><i class="fa-solid fa-car"></i> Travel & Outstation Charges (@ 80 LKR/km)</h4>
+                  <p class="small-text">Wedding, Homecoming, Pre-shoot සහ ROBE shoot සඳහා Travel Charges ඇතුළත් කිරීමට හෝ ඉවත් කිරීමට (Close):</p>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" id="adminTravelToggle" onchange="toggleAdminTravelCharges(this.checked)">
+                  <span class="slider round"></span>
+                </label>
+              </div>
+
+              <div id="adminTravelInputsContainer" style="display: none; margin-top: 14px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 12px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                  <!-- Wedding Travel -->
+                  <div class="travel-session-box" style="background: rgba(255,255,255,0.02); padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border);">
+                    <label style="font-size: 11.5px; font-weight: 700; color: #fff; display: block; margin-bottom: 4px;">Wedding Day Travel</label>
+                    <div style="display: flex; gap: 6px; align-items: center;">
+                      <input type="number" id="trWeddingKm" placeholder="Km" style="width: 65px; padding: 4px 6px; font-size: 12px;" min="0" oninput="calculateAdminTravel()">
+                      <span style="font-size: 11px; color: var(--text-muted);">km</span>
+                      <input type="number" id="trWeddingCost" placeholder="Cost" style="flex: 1; padding: 4px 6px; font-size: 12px; color: var(--gold); font-weight: 700;" min="0" oninput="calculateAdminTravelTotalManual()">
+                    </div>
+                  </div>
+
+                  <!-- Homecoming Travel -->
+                  <div class="travel-session-box" style="background: rgba(255,255,255,0.02); padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border);">
+                    <label style="font-size: 11.5px; font-weight: 700; color: #fff; display: block; margin-bottom: 4px;">Homecoming Travel</label>
+                    <div style="display: flex; gap: 6px; align-items: center;">
+                      <input type="number" id="trHomecomingKm" placeholder="Km" style="width: 65px; padding: 4px 6px; font-size: 12px;" min="0" oninput="calculateAdminTravel()">
+                      <span style="font-size: 11px; color: var(--text-muted);">km</span>
+                      <input type="number" id="trHomecomingCost" placeholder="Cost" style="flex: 1; padding: 4px 6px; font-size: 12px; color: var(--gold); font-weight: 700;" min="0" oninput="calculateAdminTravelTotalManual()">
+                    </div>
+                  </div>
+
+                  <!-- Pre-Shoot Travel -->
+                  <div class="travel-session-box" style="background: rgba(255,255,255,0.02); padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border);">
+                    <label style="font-size: 11.5px; font-weight: 700; color: #fff; display: block; margin-bottom: 4px;">Pre-Shoot Travel</label>
+                    <div style="display: flex; gap: 6px; align-items: center;">
+                      <input type="number" id="trPreshootKm" placeholder="Km" style="width: 65px; padding: 4px 6px; font-size: 12px;" min="0" oninput="calculateAdminTravel()">
+                      <span style="font-size: 11px; color: var(--text-muted);">km</span>
+                      <input type="number" id="trPreshootCost" placeholder="Cost" style="flex: 1; padding: 4px 6px; font-size: 12px; color: var(--gold); font-weight: 700;" min="0" oninput="calculateAdminTravelTotalManual()">
+                    </div>
+                  </div>
+
+                  <!-- ROBE Shoot Travel -->
+                  <div class="travel-session-box" style="background: rgba(255,255,255,0.02); padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border);">
+                    <label style="font-size: 11.5px; font-weight: 700; color: #fff; display: block; margin-bottom: 4px;">ROBE Shoot Travel</label>
+                    <div style="display: flex; gap: 6px; align-items: center;">
+                      <input type="number" id="trRobeKm" placeholder="Km" style="width: 65px; padding: 4px 6px; font-size: 12px;" min="0" oninput="calculateAdminTravel()">
+                      <span style="font-size: 11px; color: var(--text-muted);">km</span>
+                      <input type="number" id="trRobeCost" placeholder="Cost" style="flex: 1; padding: 4px 6px; font-size: 12px; color: var(--gold); font-weight: 700;" min="0" oninput="calculateAdminTravelTotalManual()">
+                    </div>
+                  </div>
+
+                  <!-- Engagement Coverage Travel -->
+                  <div class="travel-session-box" style="background: rgba(255,255,255,0.02); padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border); grid-column: span 2;">
+                    <label style="font-size: 11.5px; font-weight: 700; color: #fff; display: block; margin-bottom: 4px;">Engagement Coverage Travel</label>
+                    <div style="display: flex; gap: 6px; align-items: center;">
+                      <input type="number" id="trEngagementKm" placeholder="Km" style="width: 65px; padding: 4px 6px; font-size: 12px;" min="0" oninput="calculateAdminTravel()">
+                      <span style="font-size: 11px; color: var(--text-muted);">km</span>
+                      <input type="number" id="trEngagementCost" placeholder="Cost" style="flex: 1; padding: 4px 6px; font-size: 12px; color: var(--gold); font-weight: 700;" min="0" oninput="calculateAdminTravelTotalManual()">
+                    </div>
+                  </div>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px; background: rgba(212,175,55,0.08); padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border-gold);">
+                  <div>
+                    <span style="font-size: 11px; color: var(--text-muted);">Total Travel Charges:</span>
+                    <strong id="trCalculatedTotal" class="gold" style="font-size: 15px; display: block;">0 LKR</strong>
+                  </div>
+                  <div style="display: flex; gap: 6px;">
+                    <button type="button" class="btn-danger-sm" style="padding: 5px 10px; font-size: 11px;" onclick="closeAdminTravelCharges()">Close / Remove</button>
+                    <button type="button" class="btn-success-sm" style="padding: 5px 12px; font-size: 11px;" onclick="adminSaveTravelCharges()">Apply & Save</button>
+                  </div>
+                </div>
+              </div>
+              <div class="express-status-indicator mt-1" id="adminTravelStatusText">Status: Not Applied (0 LKR)</div>
+            </div>
+
+            <!-- Super Fast Editing Service Availability Switch -->
             <div class="admin-inner-box mt-3">
               <div class="toggle-header">
                 <div>
-                  <h4 class="inner-title"><i class="fa-solid fa-bolt"></i> Super Fast Delivery Availability</h4>
-                  <p class="small-text">Wedding එකට දිනකට පෙර Customer Dashboard එකේ මෙම Offer එක පෙන්වීමට අවසර දෙන්න.</p>
+                  <h4 class="inner-title"><i class="fa-solid fa-bolt"></i> Super Fast Editing Service</h4>
+                  <p class="small-text">Wedding එකට දින 1කට පෙර Couple එකට Super Fast Editing Service ලබාදිය හැකි නම් මෙය ON කරන්න.</p>
                 </div>
                 <label class="switch">
                   <input type="checkbox" id="adminExpressToggle" onchange="toggleAdminExpressDelivery(this.checked)">
@@ -436,6 +539,27 @@
                 <p data-i18n="paymentPolicyText">Full payment must be made at least 3 days before the event. Bank transfers are preferred.</p>
               </div>
             </div>
+
+            <!-- Official Letterhead Invoice Button -->
+            <div class="mt-3">
+              <button type="button" class="btn-outline-gold" style="width: 100%; padding: 10px 14px; font-size: 13px;" onclick="printQuotation()">
+                <i class="fa-solid fa-file-invoice-dollar"></i> View / Download Official Letterhead Invoice
+              </button>
+            </div>
+
+            <!-- Balance Payment Settlement Card (Displayed only if balance remains) -->
+            <div id="portalBalancePaymentBox" class="portal-balance-card mt-3" style="display: none;">
+              <div class="balance-card-header">
+                <div class="icon-wrap"><i class="fa-solid fa-receipt" style="color: var(--gold);"></i></div>
+                <div>
+                  <h4 style="margin: 0; color: #fff;">Balance Payment Settlement</h4>
+                  <p class="balance-sub" style="margin: 2px 0 0;">Remaining Balance: <strong class="gold" id="portalBalanceDueDisplay">0 LKR</strong></p>
+                </div>
+              </div>
+              <div id="balanceSlipActionArea" class="balance-action-area">
+                <!-- Dynamic based on slip status -->
+              </div>
+            </div>
           </div>
 
           <!-- Right: Super Fast Delivery Card (Shown conditionally) -->
@@ -630,6 +754,72 @@
         <!-- Left: Packages Catalog -->
         <div class="packages-container">
           
+          <!-- Special Custom Package Builder Card (For Custom Quotes) -->
+          <div class="custom-builder-card" id="adminCustomPackageBuilderCard">
+            <div style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;" onclick="toggleCustomBuilderCollapse()">
+              <div>
+                <span class="badge-gold" style="font-size: 10px;"><i class="fa-solid fa-sliders"></i> SPECIAL CUSTOM CLIENTS</span>
+                <h3 style="color: #fff; font-size: 16px; margin-top: 4px;">Custom Wedding Package Builder (විශේෂ පාරිභෝගිකයින් සඳහා)</h3>
+                <p style="font-size: 12px; color: var(--text-muted); margin: 0;">Standard Packages වල මිල ගණන් නොගැලපෙන විශේෂ පාරිභෝගිකයින් සඳහා අවශ්‍ය සේවාවන් තෝරා වෙන වෙනම මිල ගණන් Type කරන්න.</p>
+              </div>
+              <button type="button" class="btn-outline-gold" style="font-size: 11px; padding: 5px 10px;" id="btnToggleCustomBuilder">Open Builder</button>
+            </div>
+
+            <div id="customBuilderBody" style="display: none; margin-top: 16px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 14px;">
+              <div class="custom-items-grid">
+                <div class="custom-item-row active" id="cpRow_wedding">
+                  <label class="custom-item-label">
+                    <input type="checkbox" id="cpWeddingVideo" checked onchange="calculateCustomPackage()">
+                    <span>Wedding Video Coverage</span>
+                  </label>
+                  <input type="number" id="cpPriceWedding" class="custom-price-input" value="75000" min="0" step="1000" oninput="calculateCustomPackage()">
+                </div>
+
+                <div class="custom-item-row" id="cpRow_sameday">
+                  <label class="custom-item-label">
+                    <input type="checkbox" id="cpSameDayEdit" onchange="calculateCustomPackage()">
+                    <span>Same Day Edit Video</span>
+                  </label>
+                  <input type="number" id="cpPriceSameDay" class="custom-price-input" value="20000" min="0" step="1000" oninput="calculateCustomPackage()">
+                </div>
+
+                <div class="custom-item-row" id="cpRow_highlight">
+                  <label class="custom-item-label">
+                    <input type="checkbox" id="cpHighlightVideo" onchange="calculateCustomPackage()">
+                    <span>Highlight Video / Storytelling</span>
+                  </label>
+                  <input type="number" id="cpPriceHighlight" class="custom-price-input" value="25000" min="0" step="1000" oninput="calculateCustomPackage()">
+                </div>
+
+                <div class="custom-item-row" id="cpRow_homecoming">
+                  <label class="custom-item-label">
+                    <input type="checkbox" id="cpHomecomingVideo" onchange="calculateCustomPackage()">
+                    <span>Homecoming Video Coverage</span>
+                  </label>
+                  <input type="number" id="cpPriceHomecoming" class="custom-price-input" value="55000" min="0" step="1000" oninput="calculateCustomPackage()">
+                </div>
+
+                <div class="custom-item-row" id="cpRow_engagement">
+                  <label class="custom-item-label">
+                    <input type="checkbox" id="cpEngagementVideo" onchange="calculateCustomPackage()">
+                    <span>Engagement Video Coverage</span>
+                  </label>
+                  <input type="number" id="cpPriceEngagement" class="custom-price-input" value="45000" min="0" step="1000" oninput="calculateCustomPackage()">
+                </div>
+              </div>
+
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px; flex-wrap: wrap; gap: 10px;">
+                <div>
+                  <span style="font-size: 12px; color: var(--text-muted);">Custom Package Total:</span>
+                  <strong id="cpCalculatedTotal" class="gold" style="font-size: 20px; display: block;">75,000 LKR</strong>
+                </div>
+                <button type="button" class="btn-primary-gold" onclick="applyCustomPackageToBooking()">
+                  <i class="fa-solid fa-check"></i> Apply Custom Package to Quote
+                </button>
+              </div>
+            </div>
+          </div>
+
           <!-- Section 1: Wedding Day Packages -->
           <div class="section-title-wrap">
             <h2 class="section-title"><i class="fa-solid fa-film"></i> <span data-i18n="secWedding">1. Wedding Day Packages</span></h2>
@@ -689,6 +879,9 @@
                 <div class="total-row highlight">
                   <span data-i18n="totalPackageVal">Total Package Value:</span>
                   <span class="price-val" id="quoteTotalLKR">0 LKR</span>
+                </div>
+                <div class="travel-quote-hint" style="font-size: 11px; color: var(--gold-light); margin-top: 6px; line-height: 1.4;">
+                  <i class="fa-solid fa-car" style="color: var(--gold);"></i> <span><strong>+ Travel Charges:</strong> ප්‍රවාහන ගාස්තු ඇහැලියගොඩ සිට 1km සඳහා 80 LKR බැගින් ස්ථාන අනුව එකතු වේ.</span>
                 </div>
               </div>
 
@@ -938,6 +1131,14 @@
     </div>
   </div>
 
+  <!-- Balance Slip Image Zoom Modal -->
+  <div id="balanceSlipZoomModal" class="modal-overlay hidden" onclick="closeBalanceSlipModalAdmin()">
+    <div class="modal-card slip-zoom-card" onclick="event.stopPropagation()">
+      <button class="modal-close" onclick="closeBalanceSlipModalAdmin()">&times;</button>
+      <img id="zoomBalanceSlipImg" src="" alt="Zoomed Balance Slip">
+    </div>
+  </div>
+
   <script src="fontawesome.js"></script>
   <script src="terms_content.js"></script>
   <script src="translations.js"></script>
@@ -946,6 +1147,6 @@
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
   <script src="firebase-config.js?v=1.0"></script>
-  <script src="app.js?v=2.5"></script>
+  <script src="app.js?v=2.6"></script>
 </body>
 </html>

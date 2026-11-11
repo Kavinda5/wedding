@@ -143,9 +143,11 @@ const PRESHOOT_PACKAGES = [
 ];
 
 const ADDONS_CATALOG = [
-  { id: "addon_drone", name: "DRONE Footage", price: 15000, note: "Aerial cinematography" },
+  { id: "addon_drone_wedding", name: "Drone Footage - Wedding Day", price: 15000, note: "Aerial cinematography for Wedding" },
+  { id: "addon_drone_preshoot", name: "Drone Footage - Pre-Shoot", price: 15000, note: "Aerial cinematography for Pre-Shoot" },
+  { id: "addon_drone_homecoming", name: "Drone Footage - Homecoming", price: 15000, note: "Aerial cinematography for Homecoming" },
   { id: "addon_church", name: "Church Function", price: 15000, note: "Only if a poruwa ceremony is included" },
-  { id: "addon_rob", name: "ROB Shoot", price: 20000, note: "Registration of Marriage" },
+  { id: "addon_robe", name: "ROBE Shoot", price: 20000, note: "Wearing elegant robes before the wedding" },
   { id: "addon_savethedate", name: "Save The Date Video", price: 8000, note: "Teaser video clip" },
   { id: "addon_gettingready", name: "Getting ready shoot", price: 5000, note: "Morning preparations" },
   { id: "addon_extrahour", name: "An Extra Hour", price: 5000, note: "Per additional hour" },
@@ -164,8 +166,8 @@ const PIPELINE_STEPS = [
   {
     step: 2,
     id: "step_started",
-    title: "Editing Started (Hadanna Patan Gatta)",
-    titleSi: "වීඩියෝව සකස් කිරීමට ආරම්භ කිරීම",
+    title: "Editing Started",
+    titleSi: "වීඩියෝ සංස්කරණය ආරම්භ කිරීම",
     meta: "Duration: ~6 Hours to 1 Day",
     icon: "fa-solid fa-clapperboard"
   },
@@ -196,8 +198,8 @@ const PIPELINE_STEPS = [
   {
     step: 6,
     id: "step_ready",
-    title: "Ready for Viewing (Balanna Suudanam)",
-    titleSi: "නැරඹීමට සූදානම් (Ready for Viewing)",
+    title: "Master Video Ready for Viewing",
+    titleSi: "අවසන් වීඩියෝව නැරඹීමට සූදානම්",
     meta: "Handover & Delivery unlock",
     icon: "fa-solid fa-circle-check"
   }
@@ -504,10 +506,30 @@ function updateCloudStatusBadge() {
   }
 }
 
+function sanitizeForFirestore(val) {
+  if (val === undefined) return "";
+  if (val === null) return null;
+  if (Array.isArray(val)) {
+    return val.map(sanitizeForFirestore);
+  }
+  if (typeof val === "object" && !(val instanceof Date)) {
+    const res = {};
+    for (const key of Object.keys(val)) {
+      const sanitized = sanitizeForFirestore(val[key]);
+      if (sanitized !== undefined) {
+        res[key] = sanitized;
+      }
+    }
+    return res;
+  }
+  return val;
+}
+
 function syncBookingToCloud(booking) {
   if (!isFirebaseReady() || !booking || !booking.id) return;
   try {
-    firestoreDb.collection("octewya_bookings").doc(booking.id).set(booking, { merge: true })
+    const cleanData = sanitizeForFirestore(booking);
+    firestoreDb.collection("octewya_bookings").doc(booking.id).set(cleanData, { merge: true })
       .then(() => {
         console.log("OCTEWYA Cloud Sync: Saved", booking.id);
       })
@@ -516,6 +538,42 @@ function syncBookingToCloud(booking) {
       });
   } catch (err) {
     console.warn("OCTEWYA Cloud Sync Exception:", err);
+  }
+}
+
+let activeBookingDocUnsubscribe = null;
+
+function subscribeToBookingDoc(bookingId) {
+  if (!isFirebaseReady() || !bookingId) return;
+  if (activeBookingDocUnsubscribe) {
+    try { activeBookingDocUnsubscribe(); } catch(e) {}
+    activeBookingDocUnsubscribe = null;
+  }
+
+  try {
+    activeBookingDocUnsubscribe = firestoreDb.collection("octewya_bookings").doc(bookingId)
+      .onSnapshot((doc) => {
+        if (doc && doc.exists) {
+          const freshData = doc.data();
+          const idx = allBookings.findIndex(b => b.id === bookingId);
+          if (idx >= 0) {
+            allBookings[idx] = freshData;
+          } else {
+            allBookings.unshift(freshData);
+          }
+          localStorage.setItem(STORAGE_KEY_BOOKINGS, JSON.stringify(allBookings));
+          if (currentBookingId === bookingId) {
+            loadPortalData(bookingId, true);
+          }
+          if (document.getElementById("adminBookingsTableBody")) {
+            loadAdminData();
+          }
+        }
+      }, (err) => {
+        console.warn("Booking doc onSnapshot error:", err);
+      });
+  } catch(e) {
+    console.warn("subscribeToBookingDoc exception:", e);
   }
 }
 
@@ -543,7 +601,7 @@ function initCloudSync() {
         }
 
         if (currentBookingId) {
-          loadPortalData(currentBookingId);
+          loadPortalData(currentBookingId, true);
         }
       }
     }, (error) => {
@@ -803,6 +861,7 @@ function toggleEngagementPackage(pkgId) {
   }
   renderPackageCatalogs();
   updateQuoteSummary();
+  toggleBookingFormState();
 }
 
 function togglePreshootPackage(pkgId) {
@@ -825,6 +884,7 @@ function toggleAddon(addonId) {
   }
   renderPackageCatalogs();
   updateQuoteSummary();
+  toggleBookingFormState();
 }
 
 // ==========================================
@@ -868,7 +928,7 @@ function updateQuoteSummary() {
 
   if (items.length === 0) {
     if (emptyHint) emptyHint.style.display = "block";
-    itemsList.innerHTML = `<div class="quote-empty">${currentLang === 'si' ? 'කරුණාකර පැකේජයක් තෝරන්න' : 'Please select a wedding package'}</div>`;
+    itemsList.innerHTML = `<div class="quote-empty">${currentLang === 'si' ? 'කරුණාකර පැකේජයක් හෝ සේවාවක් තෝරන්න' : 'Please select a package or service'}</div>`;
   } else {
     if (emptyHint) emptyHint.style.display = "none";
     itemsList.innerHTML = items.map(it => `
@@ -886,25 +946,74 @@ function updateQuoteSummary() {
   const advanceEl = document.getElementById("quoteAdvanceLKR") || document.getElementById("quoteAdvance");
   const balanceEl = document.getElementById("quoteBalanceLKR") || document.getElementById("quoteBalance");
 
-  if (totalEl) totalEl.textContent = `${formatLKR(total)} LKR`;
+  if (totalEl) {
+    totalEl.innerHTML = total > 0 ? `${formatLKR(total)} LKR <small style="font-size: 12px; color: var(--gold-light); font-weight: normal;">+ Travel Charges</small>` : "0 LKR";
+  }
   if (advanceEl) advanceEl.textContent = `${formatLKR(advance)} LKR`;
-  if (balanceEl) balanceEl.textContent = `${formatLKR(balance)} LKR`;
+  if (balanceEl) {
+    balanceEl.innerHTML = balance > 0 ? `${formatLKR(balance)} LKR <small style="font-size: 11px; color: var(--gold-light); font-weight: normal;">+ Travel Charges</small>` : "0 LKR";
+  }
 
   // Dynamic show/hide
   const hcGroup = document.getElementById("homecomingDateGroup");
+  const hcLocGroup = document.getElementById("homecomingLocationGroup");
   if (hcGroup) hcGroup.style.display = currentSelection.homecomingPackage ? "block" : "none";
+  if (hcLocGroup) hcLocGroup.style.display = currentSelection.homecomingPackage ? "block" : "none";
 
   const psNotice = document.getElementById("preshootDate");
   if (psNotice && psNotice.closest('.form-group')) {
     psNotice.closest('.form-group').style.display = currentSelection.preshootPackage ? "block" : "none";
   }
 
+  // Dynamic form labels for Standalone coverage
+  const dateLbl = document.querySelector('[data-i18n="lblWeddingDate"]');
+  const locLbl = document.querySelector('[data-i18n="lblWeddingLocation"]');
+  const hasWedding = !!currentSelection.weddingPackage;
+  const hasEngagement = !!currentSelection.engagementPackage;
+  const hasHomecoming = !!currentSelection.homecomingPackage;
+  const hasPreshoot = !!currentSelection.preshootPackage;
+
+  if (!hasWedding) {
+    if (hasEngagement && !hasHomecoming && !hasPreshoot) {
+      if (dateLbl) dateLbl.textContent = currentLang === 'si' ? "Engagement දිනය (Date) *" : "Engagement Date *";
+      if (locLbl) locLbl.textContent = currentLang === 'si' ? "Engagement ස්ථානය (Location) *" : "Engagement Venue / Location *";
+      if (hcGroup) hcGroup.style.display = "none";
+      if (hcLocGroup) hcLocGroup.style.display = "none";
+    } else if (hasHomecoming && !hasEngagement && !hasPreshoot) {
+      if (dateLbl) dateLbl.textContent = currentLang === 'si' ? "Homecoming දිනය (Date) *" : "Homecoming Date *";
+      if (locLbl) locLbl.textContent = currentLang === 'si' ? "Homecoming ස්ථානය (Location) *" : "Homecoming Venue / Location *";
+      if (hcGroup) hcGroup.style.display = "none";
+      if (hcLocGroup) hcLocGroup.style.display = "none";
+    } else if (hasPreshoot && !hasEngagement && !hasHomecoming) {
+      if (dateLbl) dateLbl.textContent = currentLang === 'si' ? "Pre-Shoot දිනය (Date) *" : "Pre-Shoot Date *";
+      if (locLbl) locLbl.textContent = currentLang === 'si' ? "Pre-Shoot ස්ථානය (Location) *" : "Pre-Shoot Location *";
+      if (hcGroup) hcGroup.style.display = "none";
+      if (hcLocGroup) hcLocGroup.style.display = "none";
+    } else {
+      if (dateLbl) dateLbl.textContent = currentLang === 'si' ? "ප්‍රධාන උත්සව දිනය (Event Date) *" : "Main Event Date *";
+      if (locLbl) locLbl.textContent = currentLang === 'si' ? "උත්සව ශාලාව / ස්ථානය *" : "Event Venue / Location *";
+    }
+  } else {
+    if (dateLbl) dateLbl.textContent = currentLang === 'si' ? "මංගල දිනය (Wedding Date) *" : "Wedding Date *";
+    if (locLbl) locLbl.textContent = currentLang === 'si' ? "මංගල උත්සව ශාලාව / ස්ථානය *" : "Wedding Venue / Location *";
+  }
+
   toggleBookingFormState();
+}
+
+function hasAnyPackageSelected() {
+  return !!(
+    currentSelection.weddingPackage ||
+    currentSelection.homecomingPackage ||
+    currentSelection.engagementPackage ||
+    currentSelection.preshootPackage ||
+    (currentSelection.addons && currentSelection.addons.length > 0)
+  );
 }
 
 function toggleTermsAcceptance(checked) {
   toggleBookingFormState();
-  if (checked && currentSelection.weddingPackage) {
+  if (checked && hasAnyPackageSelected()) {
     const formSec = document.getElementById("bookingFormSection") || document.getElementById("bookingDetailsSection");
     if (formSec) {
       setTimeout(() => {
@@ -917,7 +1026,7 @@ function toggleTermsAcceptance(checked) {
 function toggleBookingFormState() {
   const tcCheck = document.getElementById("termsCheck") || document.getElementById("tcCheck");
   const tcAgreed = tcCheck ? tcCheck.checked : false;
-  const hasPackage = !!currentSelection.weddingPackage;
+  const hasPackage = hasAnyPackageSelected();
   const btn = document.getElementById("btnProceedBooking");
 
   if (btn) {
@@ -943,12 +1052,12 @@ function toggleBookingFormState() {
 }
 
 function scrollToBookingForm() {
-  const hasPackage = !!currentSelection.weddingPackage;
+  const hasPackage = hasAnyPackageSelected();
   const tcCheck = document.getElementById("termsCheck") || document.getElementById("tcCheck");
   const tcAgreed = tcCheck ? tcCheck.checked : false;
 
   if (!hasPackage) {
-    showToast("දැනුම්දීම", currentLang === 'si' ? "කරුණාකර ප්‍රධාන මංගල පැකේජයක් තෝරන්න." : "Please select a wedding package first.");
+    showToast("දැනුම්දීම", currentLang === 'si' ? "කරුණාකර පැකේජයක් හෝ සේවාවක් තෝරන්න." : "Please select a package or service first.");
     return;
   }
 
@@ -1024,8 +1133,8 @@ function removeBankSlip() {
 function handleBookingSubmit(e) {
   e.preventDefault();
 
-  if (!currentSelection.weddingPackage) {
-    alert("Please select a main wedding package!");
+  if (!hasAnyPackageSelected()) {
+    alert("Please select at least one package or service (Wedding, Homecoming, Engagement, or Pre-Shoot) to proceed with booking.");
     return;
   }
 
@@ -1042,13 +1151,25 @@ function handleBookingSubmit(e) {
   const preshootLocation = document.getElementById("preshootLocation")?.value || "";
   const notes = document.getElementById("bookingNotes").value.trim();
 
-  let total = currentSelection.weddingPackage.price;
+  // Primary WhatsApp Contact for updates & invoices
+  const primaryContactOption = document.querySelector('input[name="primaryContactOption"]:checked')?.value || "bride";
+  let primaryPhone = bridePhone;
+  if (primaryContactOption === "groom") {
+    primaryPhone = groomPhone;
+  } else if (primaryContactOption === "other") {
+    const otherVal = document.getElementById("primaryWhatsApp")?.value.trim();
+    primaryPhone = otherVal || bridePhone;
+  }
+
+  let total = 0;
+  if (currentSelection.weddingPackage) total += currentSelection.weddingPackage.price;
   if (currentSelection.homecomingPackage) total += currentSelection.homecomingPackage.price;
   if (currentSelection.engagementPackage) total += currentSelection.engagementPackage.price;
   if (currentSelection.preshootPackage) total += currentSelection.preshootPackage.price;
   currentSelection.addons.forEach(a => total += a.price);
 
-  const balanceDue = Math.max(0, total - actualAdvance);
+  // Note: Advance is NOT deducted from full amount until studio verification
+  const balanceDue = total;
   const newId = `OCT-${new Date().getFullYear()}-${String(allBookings.length + 1).padStart(3, '0')}`;
 
   const newBooking = {
@@ -1058,22 +1179,50 @@ function handleBookingSubmit(e) {
     groomName,
     bridePhone,
     groomPhone,
+    primaryContactOption,
+    primaryPhone,
     weddingDate,
     weddingLocation,
     homecomingDate,
     homecomingLocation,
     preshootDate,
     preshootLocation,
-    selectedPackage: currentSelection.weddingPackage,
-    selectedHomecoming: currentSelection.homecomingPackage,
-    selectedEngagement: currentSelection.engagementPackage,
-    selectedPreshoot: currentSelection.preshootPackage,
+    selectedPackage: currentSelection.weddingPackage || null,
+    isCustomPackage: !!currentSelection.weddingPackage?.isCustom,
+    customPackageItems: currentSelection.weddingPackage?.customItems || [],
+    selectedHomecoming: currentSelection.homecomingPackage || null,
+    selectedEngagement: currentSelection.engagementPackage || null,
+    selectedPreshoot: currentSelection.preshootPackage || null,
     selectedAddons: [...currentSelection.addons],
+    basePackageTotal: total,
+    travelCharges: {
+      enabled: false,
+      ratePerKm: 80,
+      weddingKm: 0,
+      weddingCost: 0,
+      homecomingKm: 0,
+      homecomingCost: 0,
+      preshootKm: 0,
+      preshootCost: 0,
+      robeKm: 0,
+      robeCost: 0,
+      engagementKm: 0,
+      engagementCost: 0,
+      totalTravelCost: 0
+    },
     totalAmount: total,
     advancePaid: actualAdvance,
     isAdvanceVerified: false,
+    isAdvanceRejected: false,
+    advanceRejectReason: "",
+    isBookingConfirmed: false,
     isFullPaid: false,
     balanceDue,
+    balanceSlipUrl: "",
+    balanceSlipSubmitted: false,
+    balanceSlipVerified: false,
+    balanceSlipRejected: false,
+    balanceRejectReason: "",
     notes,
     bankSlipUrl: currentSelection.bankSlipData || "https://placehold.co/600x400/181b26/d4af37?text=Slip+Uploaded",
     expressDeliveryAvailable: false,
@@ -1096,13 +1245,30 @@ function handleBookingSubmit(e) {
     populateMasterCoupleSelector();
   }
 
+  // Live subscription
+  subscribeToBookingDoc(newId);
+
+  // Notify Studio
+  sendCleanWhatsAppMessage(
+    "0714277276",
+    `📸 *New Wedding Booking Placed!*
+ID: ${newId}
+Couple: ${brideName} & ${groomName}
+Date: ${weddingDate}
+Location: ${weddingLocation}
+Package: ${currentSelection.weddingPackage.name}
+Total: ${formatLKR(total)} LKR
+Advance Paid: ${formatLKR(actualAdvance)} LKR (⏳ Needs Verification)
+Primary WhatsApp: ${primaryPhone}`
+  );
+
   // If in multi-panel client view:
   if (document.getElementById("clientNavTabs")) {
     currentBookingId = newId;
     switchClientTab("portal");
     showToast(
       currentLang === "si" ? "Booking එක සාර්ථකව සම්පූර්ණයි!" : "Booking Successfully Submitted!",
-      currentLang === "si" ? `ඔබගේ Booking ID: ${newId}` : `Your Booking ID: ${newId}`
+      currentLang === "si" ? `ඔබගේ Booking ID: ${newId} (Advance Verification Pending)` : `Your Booking ID: ${newId} (Awaiting Studio Review)`
     );
     try {
       window.history.pushState(null, '', `?tab=portal&id=${newId}`);
@@ -1118,7 +1284,7 @@ function handleBookingSubmit(e) {
 // 8. COUPLE DASHBOARD (PORTAL VIEW)
 // ==========================================
 
-function loadPortalData(bookingId) {
+function loadPortalData(bookingId, skipSubscribe) {
   const isAdmin = !!document.getElementById("adminBookingsTableBody");
   const booking = allBookings.find(b => b.id === bookingId) || (isAdmin ? (allBookings[0] || null) : null);
   const clientPortalContent = document.getElementById("clientPortalContent");
@@ -1132,6 +1298,11 @@ function loadPortalData(bookingId) {
     return;
   }
 
+  // Subscribe to live cloud updates for this specific booking
+  if (!skipSubscribe && booking.id) {
+    subscribeToBookingDoc(booking.id);
+  }
+
   if (clientPortalContent) clientPortalContent.style.display = "block";
   if (adminPortalPreviewBody) adminPortalPreviewBody.style.display = "block";
   if (adminPortalEmptyHint) adminPortalEmptyHint.style.display = "none";
@@ -1143,9 +1314,26 @@ function loadPortalData(bookingId) {
   const bookingIdEl = document.getElementById("portalBookingId");
   if (bookingIdEl) bookingIdEl.textContent = booking.id || "";
 
-  let summary = booking.selectedPackage?.name || "Wedding Package";
-  if (booking.selectedHomecoming) summary += ` + ${booking.selectedHomecoming.name}`;
-  if (booking.selectedPreshoot) summary += ` + Pre-Shoot`;
+  let summary = "";
+  if (booking.isCustomPackage) {
+    summary = "Custom Cinematography Package";
+  } else if (booking.selectedPackage) {
+    summary = booking.selectedPackage.name;
+    if (booking.selectedHomecoming) summary += ` + ${booking.selectedHomecoming.name}`;
+    if (booking.selectedEngagement) summary += ` + ${booking.selectedEngagement.name}`;
+    if (booking.selectedPreshoot) summary += ` + Pre-Shoot`;
+  } else if (booking.selectedEngagement) {
+    summary = booking.selectedEngagement.name;
+    if (booking.selectedHomecoming) summary += ` + ${booking.selectedHomecoming.name}`;
+    if (booking.selectedPreshoot) summary += ` + Pre-Shoot`;
+  } else if (booking.selectedHomecoming) {
+    summary = booking.selectedHomecoming.name;
+    if (booking.selectedPreshoot) summary += ` + Pre-Shoot`;
+  } else if (booking.selectedPreshoot) {
+    summary = booking.selectedPreshoot.name;
+  } else {
+    summary = "Cinematography Service";
+  }
   if (booking.selectedAddons?.length > 0) summary += ` + ${booking.selectedAddons.length} Add-ons`;
   const summaryEl = document.getElementById("portalPackageSummary");
   if (summaryEl) summaryEl.textContent = summary;
@@ -1153,20 +1341,39 @@ function loadPortalData(bookingId) {
   const dateFormattedEl = document.getElementById("portalWeddingDateFormatted");
   if (dateFormattedEl) dateFormattedEl.textContent = formatDatePretty(booking.weddingDate);
 
-  // Financials
+  // Financials & Payment Verification Workflow
   const totalAmountEl = document.getElementById("portalTotalAmount");
-  if (totalAmountEl) totalAmountEl.textContent = `${formatLKR(booking.totalAmount)} LKR`;
+  if (totalAmountEl) {
+    if (booking.travelCharges && booking.travelCharges.enabled && booking.travelCharges.totalTravelCost > 0) {
+      totalAmountEl.innerHTML = `${formatLKR(booking.totalAmount)} LKR <small style="display:block; font-size:11.5px; color:var(--gold); font-weight:normal;">(Package: ${formatLKR(booking.basePackageTotal || (booking.totalAmount - booking.travelCharges.totalTravelCost))} LKR + Travel: ${formatLKR(booking.travelCharges.totalTravelCost)} LKR)</small>`;
+    } else {
+      totalAmountEl.textContent = `${formatLKR(booking.totalAmount)} LKR`;
+    }
+  }
+  
   const advancePaidEl = document.getElementById("portalAdvancePaid");
-  if (advancePaidEl) advancePaidEl.textContent = `${formatLKR(booking.advancePaid)} LKR`;
+  if (advancePaidEl) {
+    if (booking.isAdvanceVerified) {
+      advancePaidEl.innerHTML = `${formatLKR(booking.advancePaid)} LKR <span class="badge-success" style="font-size: 11px; margin-left: 6px;"><i class="fa-solid fa-circle-check"></i> Verified</span>`;
+    } else if (booking.isAdvanceRejected) {
+      advancePaidEl.innerHTML = `${formatLKR(booking.advancePaid)} LKR <span class="badge-danger" style="font-size: 11px; margin-left: 6px;"><i class="fa-solid fa-circle-xmark"></i> Rejected</span>`;
+    } else {
+      advancePaidEl.innerHTML = `${formatLKR(booking.advancePaid)} LKR <span class="badge-warning" style="font-size: 11px; margin-left: 6px;"><i class="fa-solid fa-clock"></i> Waiting for Review</span>`;
+    }
+  }
 
   const balDueElem = document.getElementById("portalBalanceDue");
-  if (balDueElem) balDueElem.textContent = `${formatLKR(booking.balanceDue)} LKR`;
-
   const balBox = document.getElementById("balanceMetricBox");
-  if (balBox) {
-    if (booking.isFullPaid || booking.balanceDue <= 0) {
-      balBox.className = "total-row highlight";
-      if (balDueElem) balDueElem.textContent = "0 LKR (Settled)";
+  if (balDueElem) {
+    if (booking.isFullPaid || (booking.isAdvanceVerified && booking.balanceDue <= 0)) {
+      if (balBox) balBox.className = "total-row highlight";
+      balDueElem.textContent = "0 LKR (Settled)";
+    } else if (!booking.isAdvanceVerified) {
+      if (balBox) balBox.className = "total-row";
+      balDueElem.innerHTML = `${formatLKR(booking.totalAmount)} LKR <small style="display:block; font-size:11px; color:#ffc107;">(Pending Studio Verification)</small>`;
+    } else {
+      if (balBox) balBox.className = "total-row";
+      balDueElem.textContent = `${formatLKR(booking.balanceDue)} LKR`;
     }
   }
 
@@ -1174,15 +1381,33 @@ function loadPortalData(bookingId) {
   const itemsList = document.getElementById("portalPackageItemsList");
   if (itemsList) {
     const items = [];
-    if (booking.selectedPackage) items.push(booking.selectedPackage.name);
+    if (booking.customPackageItems?.length > 0) {
+      booking.customPackageItems.forEach(cp => items.push(`${cp.name} (${formatLKR(cp.price)} LKR)`));
+    } else if (booking.selectedPackage) {
+      items.push(booking.selectedPackage.name);
+    }
     if (booking.selectedHomecoming) items.push(booking.selectedHomecoming.name);
     if (booking.selectedEngagement) items.push(booking.selectedEngagement.name);
     if (booking.selectedPreshoot) items.push(booking.selectedPreshoot.name);
     booking.selectedAddons?.forEach(a => items.push(a.name));
+    if (booking.expressDeliveryAccepted) {
+      items.push("⚡ Super Fast Editing Service (VIP Fast-Track)");
+    }
+    if (booking.travelCharges && booking.travelCharges.enabled && booking.travelCharges.totalTravelCost > 0) {
+      const tc = booking.travelCharges;
+      if (tc.weddingCost > 0) items.push(`🚗 Travel Charges - Wedding (${tc.weddingKm} km @ 80 LKR/km): ${formatLKR(tc.weddingCost)} LKR`);
+      if (tc.homecomingCost > 0) items.push(`🚗 Travel Charges - Homecoming (${tc.homecomingKm} km @ 80 LKR/km): ${formatLKR(tc.homecomingCost)} LKR`);
+      if (tc.preshootCost > 0) items.push(`🚗 Travel Charges - Pre-Shoot (${tc.preshootKm} km @ 80 LKR/km): ${formatLKR(tc.preshootCost)} LKR`);
+      if (tc.robeCost > 0) items.push(`🚗 Travel Charges - ROBE Shoot (${tc.robeKm} km @ 80 LKR/km): ${formatLKR(tc.robeCost)} LKR`);
+      if (tc.engagementCost > 0) items.push(`🚗 Travel Charges - Engagement (${tc.engagementKm} km @ 80 LKR/km): ${formatLKR(tc.engagementCost)} LKR`);
+    }
     itemsList.innerHTML = items.map(it => `<li><i class="fa-solid fa-angle-right"></i> ${it}</li>`).join("");
   }
 
   evaluatePaymentAlert(booking);
+
+  // Balance Payment Section
+  renderBalancePaymentSection(booking);
 
   // Pre-shoot toggle
   const psCountdownBox = document.getElementById("preshootCountdownBox");
@@ -1202,7 +1427,7 @@ function loadPortalData(bookingId) {
   renderPipelineStepper("weddingStepper", booking.weddingStepCompleted);
   document.getElementById("wdOverallBadge").textContent = getOverallStatusLabel(booking.weddingStepCompleted);
 
-  // Super Fast Delivery
+  // Super Fast Editing Service
   evaluateExpressDeliveryCard(booking);
 
   // Delivery & Feedback Sections (Unlock when step 6 reached)
@@ -1216,6 +1441,67 @@ function loadPortalData(bookingId) {
 
   // Handle Locked Mode (If client already accepted video)
   checkProjectLockedState(booking);
+}
+
+function renderBalancePaymentSection(booking) {
+  const balanceCard = document.getElementById("portalBalancePaymentBox");
+  const balanceActionArea = document.getElementById("balanceSlipActionArea");
+  const balDisplay = document.getElementById("portalBalanceDueDisplay");
+  if (!balanceCard || !balanceActionArea) return;
+
+  // Show only if advance is verified AND there is a balance due
+  if (booking.isAdvanceVerified && booking.balanceDue > 0 && !booking.isFullPaid) {
+    balanceCard.style.display = "block";
+    if (balDisplay) balDisplay.textContent = `${formatLKR(booking.balanceDue)} LKR`;
+
+    if (booking.balanceSlipSubmitted) {
+      if (booking.balanceSlipVerified) {
+        balanceActionArea.innerHTML = `
+          <div class="express-confirmed-box">
+            <i class="fa-solid fa-circle-check" style="color: var(--accent-green); font-size: 20px;"></i>
+            <div>
+              <strong>Balance Payment Verified & Settled!</strong>
+              <p style="margin: 0; font-size: 12px; color: #aaa;">Your full payment has been confirmed by OCTEWYA Studio.</p>
+            </div>
+          </div>
+        `;
+      } else if (booking.balanceSlipRejected) {
+        balanceActionArea.innerHTML = `
+          <div style="background: rgba(220,53,69,0.15); border: 1px solid rgba(220,53,69,0.4); border-radius: 6px; padding: 12px; margin-bottom: 12px;">
+            <strong style="color: #ff6b6b;"><i class="fa-solid fa-circle-xmark"></i> Balance Slip Rejected</strong>
+            <p style="font-size: 12px; color: #ddd; margin: 4px 0 0;">${booking.balanceRejectReason || 'Please upload a clearer slip screenshot or check account details.'}</p>
+          </div>
+          <button type="button" class="btn-primary-gold" onclick="openBalanceSlipModal()">
+            <i class="fa-solid fa-cloud-arrow-up"></i> Re-upload Balance Payment Slip
+          </button>
+        `;
+      } else {
+        balanceActionArea.innerHTML = `
+          <div style="background: rgba(255,193,7,0.12); border: 1px solid rgba(255,193,7,0.3); border-radius: 6px; padding: 12px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <i class="fa-solid fa-hourglass-half" style="color: #ffc107; font-size: 20px;"></i>
+              <div>
+                <strong style="color: #ffc107;">Slip Uploaded - Waiting for Studio Verification</strong>
+                <p style="margin: 0; font-size: 12px; color: #aaa;">Our team will review and verify your settlement shortly.</p>
+              </div>
+            </div>
+            <button type="button" class="btn-outline-gold" style="font-size: 11px; padding: 5px 10px;" onclick="openBalanceSlipModal()">Change Slip</button>
+          </div>
+        `;
+      }
+    } else {
+      balanceActionArea.innerHTML = `
+        <p class="small-text" style="color: #ccc; margin-bottom: 12px;">
+          ඔබ ඉතිරි මුදල බැංකු ගිණුමට තැන්පත් කළ පසු, එහි Bank Slip පත්‍රිකාවේ ඡායාරූපය මෙතැනින් Upload කරන්න.
+        </p>
+        <button type="button" class="btn-primary-gold" onclick="openBalanceSlipModal()">
+          <i class="fa-solid fa-cloud-arrow-up"></i> Upload Balance Payment Slip (${formatLKR(booking.balanceDue)} LKR)
+        </button>
+      `;
+    }
+  } else {
+    balanceCard.style.display = "none";
+  }
 }
 
 function checkProjectLockedState(booking) {
@@ -1266,42 +1552,83 @@ function evaluatePaymentAlert(booking) {
   }
 }
 
-// Super Fast Delivery
+// Super Fast Editing Service
 function evaluateExpressDeliveryCard(booking) {
   const card = document.getElementById("expressDeliveryCard");
-  const offerBox = document.getElementById("expressOfferDetails");
-  if (!card || !offerBox) return;
+  if (!card) return;
 
-  if (!booking.expressDeliveryAvailable || booking.expressDeliveryAccepted || booking.weddingStepCompleted >= 2) {
-    card.style.display = "none";
-    return;
-  }
-
-  const now = new Date();
-  const weddingDay = new Date(booking.weddingDate);
-  const diffDays = Math.ceil((weddingDay.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-
-  if (diffDays > 2) {
-    card.style.display = "none";
-    return;
-  }
-
-  card.style.display = "block";
-  const isPkg3OrVIP = booking.selectedPackage?.id === "pkg_03" || booking.selectedPackage?.id === "pkg_vip";
-  const daysText = isPkg3OrVIP ? "Within 3 Days (දින 3ක් ඇතුළත)" : "Within 2 Days (දින 2ක් ඇතුළත)";
-  const cost = isPkg3OrVIP ? 15000 : 10000;
-
-  offerBox.innerHTML = `
-    <div style="display: flex; justify-content: space-between; align-items: center;">
-      <div>
-        <h4 style="color: #fff; font-size: 15px;">Fast-Track Express Premiere Delivery</h4>
-        <p style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
-          Completed & Delivered in <strong>${daysText}</strong>.
-        </p>
+  // If already accepted:
+  if (booking.expressDeliveryAccepted) {
+    card.style.display = "block";
+    card.innerHTML = `
+      <div class="express-confirmed-box">
+        <i class="fa-solid fa-bolt" style="color: var(--gold); font-size: 24px;"></i>
+        <div>
+          <strong style="color: #fff; font-size: 15px;">Super Fast Editing Service Confirmed!</strong>
+          <p style="margin: 4px 0 0; font-size: 12.5px; color: #ddd;">
+            "We offer an exclusive fast track editing service, ensuring your wedding video is fully edited by the day following your wedding."
+          </p>
+        </div>
       </div>
-      <div class="price-val gold" style="font-size: 20px;">+${formatLKR(cost)} LKR</div>
-    </div>
-  `;
+    `;
+    return;
+  }
+
+  // If editing already started past step 2, hide
+  if (booking.weddingStepCompleted >= 2) {
+    card.style.display = "none";
+    return;
+  }
+
+  // If manually enabled by Dasun in Admin
+  if (booking.expressDeliveryAvailable) {
+    card.style.display = "block";
+    const isPkg3OrVIP = booking.selectedPackage?.id === "pkg_03" || booking.selectedPackage?.id === "pkg_vip";
+    const daysText = isPkg3OrVIP ? "Within 3 Days (දින 3ක් ඇතුළත)" : "By Day Following Wedding (පසුදිනම)";
+    const cost = isPkg3OrVIP ? 15000 : 10000;
+
+    card.innerHTML = `
+      <div class="express-card-inner" style="background: linear-gradient(135deg, rgba(212, 175, 55, 0.12) 0%, rgba(20, 24, 38, 0.98) 100%); border: 1px solid var(--border-gold); border-radius: var(--radius-md); padding: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap;">
+          <div style="flex: 1; min-width: 250px;">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+              <span class="badge-gold"><i class="fa-solid fa-bolt"></i> VIP FAST-TRACK</span>
+              <span class="badge-success"><i class="fa-solid fa-circle-check"></i> Available for You</span>
+            </div>
+            <h3 style="color: #fff; font-size: 17px; margin: 0 0 6px;">Super Fast Editing Service</h3>
+            <p style="font-size: 13px; color: #e0e0e0; line-height: 1.5; margin: 0 0 10px;">
+              "We offer an exclusive fast track editing service, ensuring your wedding video is fully edited by the day following your wedding."
+            </p>
+            <span style="font-size: 12px; color: var(--gold-light);"><i class="fa-solid fa-clock"></i> Express Delivery: <strong>${daysText}</strong></span>
+          </div>
+          <div style="text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 8px;">
+            <div class="price-val gold" style="font-size: 22px; font-weight: 800;">+${formatLKR(cost)} LKR</div>
+            <button class="btn-primary-gold" onclick="acceptExpressDelivery()" style="padding: 9px 18px; font-size: 13px;">
+              <i class="fa-solid fa-bolt"></i> ${currentLang === 'si' ? 'Super Fast Editing Service ලබාගන්න' : 'Request Fast-Track Editing'}
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+  } else {
+    // Show locked informative notice
+    card.style.display = "block";
+    card.innerHTML = `
+      <div class="express-locked-notice">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+          <i class="fa-solid fa-bolt" style="color: var(--gold);"></i>
+          <strong style="color: #fff; font-size: 14px;">Super Fast Editing Service</strong>
+          <span class="badge-locked" style="font-size: 10px;"><i class="fa-solid fa-lock"></i> Locked</span>
+        </div>
+        <p style="margin: 0 0 6px; font-size: 12.5px; color: #bbb; font-style: italic;">
+          "We offer an exclusive fast track editing service, ensuring your wedding video is fully edited by the day following your wedding."
+        </p>
+        <span style="font-size: 11.5px; color: var(--text-muted); display: block;">
+          <i class="fa-solid fa-circle-info"></i> මෙම සේවාව මංගල දිනයට දින 1කට පෙර Studio Availability අනුව පරීක්ෂා කර Dashboard එකෙන් Unlock කරනු ලැබේ.
+        </span>
+      </div>
+    `;
+  }
 }
 
 function acceptExpressDelivery() {
@@ -1310,19 +1637,19 @@ function acceptExpressDelivery() {
   const cost = isPkg3OrVIP ? 15000 : 10000;
 
   booking.expressDeliveryAccepted = true;
-  booking.totalAmount += cost;
-  booking.balanceDue += cost;
-  saveDataToStorage();
+  booking.expressDeliveryFee = cost;
+  recalculateBookingFinancials(booking);
+  saveDataToStorage(booking);
 
   loadPortalData(booking.id);
-  showToast("Express Delivery Confirmed!", `Fast-Track Delivery commitment added.`);
+  showToast("Express Service Confirmed!", `Super Fast Editing Service commitment added.`);
 
   sendCleanWhatsAppMessage(
     "0714277276",
-    `⚡ *Super Fast Delivery Requested!*
+    `⚡ *Super Fast Editing Service Requested!*
 Couple: ${booking.coupleTitle} (ID: ${booking.id})
 Wedding Date: ${booking.weddingDate}
-Delivery Commitment: ${isPkg3OrVIP ? '3 Days (+15,000 LKR)' : '2 Days (+10,000 LKR)'}`
+Delivery Commitment: ${isPkg3OrVIP ? '3 Days (+15,000 LKR)' : 'Next Day (+10,000 LKR)'}`
   );
 }
 
@@ -1569,28 +1896,113 @@ function loadAdminData() {
     psBox.style.display = "none";
   }
 
-  // Slip & Payments
+  // Advance Slip & Payments Verification
   const slipImg = document.getElementById("adminSlipImg");
-  if (slipImg) slipImg.src = activeBooking.bankSlipUrl || "";
+  if (slipImg) slipImg.src = activeBooking.bankSlipUrl || "https://placehold.co/400x250/222/c5a059?text=Bank+Slip";
+  
   const paymentMetrics = document.getElementById("adminPaymentMetrics");
   if (paymentMetrics) {
+    let advBadge = '<span class="badge-warning">⏳ Waiting for Review</span>';
+    if (activeBooking.isAdvanceVerified) {
+      advBadge = '<span class="badge-success">✓ Verified & Confirmed</span>';
+    } else if (activeBooking.isAdvanceRejected) {
+      advBadge = '<span class="badge-danger">✗ Slip Rejected</span>';
+    }
+
     paymentMetrics.innerHTML = `
-      <div><strong>Total:</strong> ${formatLKR(activeBooking.totalAmount)} LKR</div>
-      <div><strong>Paid:</strong> ${formatLKR(activeBooking.advancePaid)} LKR (${activeBooking.isAdvanceVerified ? 'Verified ✓' : 'Unverified'})</div>
-      <div><strong>Balance:</strong> ${formatLKR(activeBooking.balanceDue)} LKR (${activeBooking.isFullPaid ? 'Settled ✓' : 'Pending'})</div>
+      <div style="font-size: 13px; line-height: 1.6;">
+        <div><strong>Total Package Value:</strong> ${formatLKR(activeBooking.totalAmount)} LKR</div>
+        <div><strong>Advance Deposited:</strong> ${formatLKR(activeBooking.advancePaid)} LKR ${advBadge}</div>
+        <div><strong>Remaining Balance:</strong> <span class="gold">${formatLKR(activeBooking.balanceDue)} LKR</span></div>
+        <div style="font-size: 11.5px; color: var(--text-muted); margin-top: 4px;">
+          <i class="fa-brands fa-whatsapp" style="color: #25D366;"></i> Primary Updates: <strong>${activeBooking.primaryPhone || activeBooking.bridePhone}</strong>
+        </div>
+      </div>
     `;
   }
-  const editPaidInput = document.getElementById("adminEditPaidAmount");
-  if (editPaidInput) editPaidInput.value = activeBooking.advancePaid;
 
-  // Express Toggle
+  // Balance Slip Verification in Admin
+  const balBox = document.getElementById("adminBalanceVerificationBox");
+  const balSlipImg = document.getElementById("adminBalanceSlipImg");
+  const balMetrics = document.getElementById("adminBalanceMetrics");
+
+  if (balBox && balMetrics) {
+    if (activeBooking.isAdvanceVerified && activeBooking.balanceDue > 0) {
+      balBox.style.display = "block";
+      if (balSlipImg) {
+        balSlipImg.src = activeBooking.balanceSlipUrl || "https://placehold.co/400x250/222/c5a059?text=No+Balance+Slip";
+      }
+
+      let balBadge = '<span class="badge-warning" style="font-size: 10px;">⏳ Awaiting Client Upload</span>';
+      if (activeBooking.balanceSlipSubmitted) {
+        if (activeBooking.balanceSlipVerified) {
+          balBadge = '<span class="badge-success" style="font-size: 10px;">✓ Full Settlement Verified</span>';
+        } else if (activeBooking.balanceSlipRejected) {
+          balBadge = '<span class="badge-danger" style="font-size: 10px;">✗ Slip Rejected</span>';
+        } else {
+          balBadge = '<span class="badge-warning" style="font-size: 10px;">⏳ Slip Uploaded (Needs Review)</span>';
+        }
+      }
+
+      balMetrics.innerHTML = `
+        <div style="font-size: 13px; line-height: 1.6;">
+          <div><strong>Remaining Balance:</strong> <span class="gold">${formatLKR(activeBooking.balanceDue)} LKR</span></div>
+          <div><strong>Settlement Status:</strong> ${balBadge}</div>
+        </div>
+      `;
+    } else if (activeBooking.isFullPaid || activeBooking.balanceDue <= 0) {
+      balBox.style.display = "block";
+      if (balSlipImg) {
+        balSlipImg.src = activeBooking.balanceSlipUrl || "https://placehold.co/400x250/222/c5a059?text=Fully+Paid";
+      }
+      balMetrics.innerHTML = `
+        <div style="font-size: 13px; line-height: 1.6;">
+          <div><span class="badge-success">✓ 100% Fully Settled (0 LKR Balance)</span></div>
+        </div>
+      `;
+    } else {
+      balBox.style.display = "none";
+    }
+  }
+
+  // Travel Charges Box in Admin
+  const travelToggle = document.getElementById("adminTravelToggle");
+  const travelContainer = document.getElementById("adminTravelInputsContainer");
+  const travelStatusText = document.getElementById("adminTravelStatusText");
+
+  const tc = activeBooking.travelCharges || { enabled: false, weddingKm: 0, weddingCost: 0, homecomingKm: 0, homecomingCost: 0, preshootKm: 0, preshootCost: 0, robeKm: 0, robeCost: 0, engagementKm: 0, engagementCost: 0, totalTravelCost: 0 };
+  
+  if (travelToggle) travelToggle.checked = !!tc.enabled;
+  if (travelContainer) travelContainer.style.display = tc.enabled ? "block" : "none";
+  if (travelStatusText) {
+    travelStatusText.textContent = tc.enabled && tc.totalTravelCost > 0 
+      ? `Status: Applied (${formatLKR(tc.totalTravelCost)} LKR Added to Total)`
+      : "Status: Not Applied (0 LKR)";
+  }
+  
+  const setTrVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = (val !== undefined && val !== null && val > 0) ? val : ""; };
+  setTrVal("trWeddingKm", tc.weddingKm);
+  setTrVal("trWeddingCost", tc.weddingCost);
+  setTrVal("trHomecomingKm", tc.homecomingKm);
+  setTrVal("trHomecomingCost", tc.homecomingCost);
+  setTrVal("trPreshootKm", tc.preshootKm);
+  setTrVal("trPreshootCost", tc.preshootCost);
+  setTrVal("trRobeKm", tc.robeKm);
+  setTrVal("trRobeCost", tc.robeCost);
+  setTrVal("trEngagementKm", tc.engagementKm);
+  setTrVal("trEngagementCost", tc.engagementCost);
+
+  const trTotalDisplay = document.getElementById("trCalculatedTotal") || document.getElementById("trTotalTravelCostDisplay");
+  if (trTotalDisplay) trTotalDisplay.textContent = `${formatLKR(tc.totalTravelCost || 0)} LKR`;
+
+  // Super Fast Editing Service Switch
   const expressToggle = document.getElementById("adminExpressToggle");
   if (expressToggle) expressToggle.checked = !!activeBooking.expressDeliveryAvailable;
   const expressText = document.getElementById("adminExpressStatusText");
   if (expressText) {
     expressText.textContent = activeBooking.expressDeliveryAvailable 
-      ? "Status: Available (Visible 1 day prior)" 
-      : "Status: Unavailable (Off)";
+      ? "Status: Available (Unlocked on Client Portal)" 
+      : "Status: Unavailable (Locked)";
   }
 
   // Direct Secret Portal Link
@@ -1598,6 +2010,15 @@ function loadAdminData() {
   if (portalInput) {
     portalInput.value = `${getBaseUrl()}index.html?tab=portal&id=${activeBooking.id}`;
   }
+}
+
+function getBookingPrimaryPackageName(b) {
+  if (b.isCustomPackage) return "Custom Package";
+  if (b.selectedPackage?.name) return b.selectedPackage.name;
+  if (b.selectedEngagement?.name) return b.selectedEngagement.name;
+  if (b.selectedHomecoming?.name) return b.selectedHomecoming.name;
+  if (b.selectedPreshoot?.name) return b.selectedPreshoot.name;
+  return "Cinematography Service";
 }
 
 function renderAdminTable(bookingsList) {
@@ -1625,13 +2046,13 @@ function renderAdminTable(bookingsList) {
       <td><strong>${b.id}</strong></td>
       <td>
         <span style="font-weight: 700; color: #fff;">${b.coupleTitle}</span><br>
-        <small style="color: var(--text-muted);"><i class="fa-brands fa-whatsapp"></i> ${b.bridePhone}</small>
+        <small style="color: var(--text-muted);"><i class="fa-brands fa-whatsapp"></i> ${b.primaryPhone || b.bridePhone}</small>
       </td>
       <td>${b.weddingDate}</td>
-      <td>${b.selectedPackage?.name || 'Custom'}</td>
+      <td>${getBookingPrimaryPackageName(b)}</td>
       <td>
         <span>${formatLKR(b.totalAmount)}</span> / 
-        <span style="color: var(--accent-green);">${formatLKR(b.advancePaid)}</span> / 
+        <span style="color: ${b.isAdvanceVerified ? 'var(--accent-green)' : '#ffc107'};">${formatLKR(b.advancePaid)} ${b.isAdvanceVerified ? '✓' : '⏳'}</span> / 
         <span style="color: ${b.balanceDue > 0 ? 'var(--gold)' : 'var(--accent-green)'};">${formatLKR(b.balanceDue)}</span>
       </td>
       <td>
@@ -1645,7 +2066,10 @@ function renderAdminTable(bookingsList) {
         </span>
       </td>
       <td>
-        <button class="btn-gold-sm" onclick="selectBookingFromAdmin('${b.id}')">Manage</button>
+        <div style="display: flex; gap: 6px; align-items: center;">
+          <button class="btn-gold-sm" onclick="selectBookingFromAdmin('${b.id}')">Manage</button>
+          <button class="btn-danger-sm" onclick="adminPromptDeleteBooking('${b.id}')" title="Delete Booking (Requires PIN)"><i class="fa-solid fa-trash-can"></i></button>
+        </div>
       </td>
     `;
     tbody.appendChild(tr);
@@ -1699,42 +2123,532 @@ function renderAdminStepButtons(containerId, activeStep, onStepClick) {
   });
 }
 
-function adminSaveCustomAdvance() {
-  const booking = getActiveBooking();
-  const newAdvance = Number(document.getElementById("adminEditPaidAmount").value) || 0;
-  booking.advancePaid = newAdvance;
-  booking.balanceDue = Math.max(0, booking.totalAmount - newAdvance);
-  if (booking.balanceDue === 0) booking.isFullPaid = true;
+function recalculateBookingFinancials(booking) {
+  if (!booking) return;
+  if (booking.basePackageTotal === undefined || booking.basePackageTotal === null) {
+    const existingTravel = (booking.travelCharges && booking.travelCharges.enabled) ? (booking.travelCharges.totalTravelCost || 0) : 0;
+    const existingExpress = booking.expressDeliveryAccepted ? (booking.expressDeliveryFee || 0) : 0;
+    booking.basePackageTotal = Math.max(0, (booking.totalAmount || 0) - existingTravel - existingExpress);
+  }
 
-  saveDataToStorage();
-  loadAdminData();
-  showToast("Paid Amount Saved", `Updated advance to ${formatLKR(newAdvance)} LKR`);
+  const travelCost = (booking.travelCharges && booking.travelCharges.enabled) ? (booking.travelCharges.totalTravelCost || 0) : 0;
+  const expressCost = booking.expressDeliveryAccepted ? (booking.expressDeliveryFee || 0) : 0;
+  
+  booking.totalAmount = booking.basePackageTotal + travelCost + expressCost;
+  
+  if (booking.isFullPaid) {
+    booking.balanceDue = 0;
+  } else if (booking.isAdvanceVerified) {
+    booking.balanceDue = Math.max(0, booking.totalAmount - (booking.advancePaid || 0));
+  } else {
+    // Before advance verification, balance due equals totalAmount
+    booking.balanceDue = booking.totalAmount;
+  }
 }
 
-function adminVerifyAdvance() {
+function adminVerifyPayment() {
   const booking = getActiveBooking();
+  if (!booking) return;
+
   booking.isAdvanceVerified = true;
-  saveDataToStorage();
+  booking.isAdvanceRejected = false;
+  booking.advanceRejectReason = "";
+  booking.isBookingConfirmed = true;
+  recalculateBookingFinancials(booking);
+  if (booking.balanceDue === 0) {
+    booking.isFullPaid = true;
+  }
+
+  saveDataToStorage(booking);
   loadAdminData();
-  showToast("Advance Verified", "Advance receipt marked as verified.");
+  showToast("Advance Verified & Confirmed!", `Booking ${booking.id} confirmed. Advance deducted.`);
+
+  // Prompt / Trigger Letterhead Invoice on WhatsApp
+  sendInvoiceWhatsApp("advance");
 }
 
-function adminMarkFullPaid() {
+function adminRejectSlip(type) {
   const booking = getActiveBooking();
-  booking.isFullPaid = true;
-  booking.advancePaid = booking.totalAmount;
-  booking.balanceDue = 0;
-  saveDataToStorage();
+  if (!booking) return;
+
+  const reason = prompt(
+    type === 'advance' 
+      ? "Enter rejection reason for Advance Slip (e.g. Unclear photo, Deposit not in bank statement):"
+      : "Enter rejection reason for Balance Settlement Slip:"
+  );
+  if (reason === null) return;
+
+  if (type === 'advance') {
+    booking.isAdvanceVerified = false;
+    booking.isAdvanceRejected = true;
+    booking.advanceRejectReason = reason.trim() || "Slip unreadable or not verified";
+  } else {
+    booking.balanceSlipVerified = false;
+    booking.balanceSlipRejected = true;
+    booking.balanceRejectReason = reason.trim() || "Slip unreadable or not verified";
+  }
+
+  saveDataToStorage(booking);
   loadAdminData();
-  showToast("Full Payment Settled", "Marked 100% fully paid!");
+  showToast("Slip Rejected", `Notification logged for ${booking.id}`);
+
+  // Send WhatsApp notification of rejection to couple
+  const phone = booking.primaryPhone || booking.bridePhone || booking.groomPhone;
+  if (phone) {
+    const msg = `⚠️ *OCTEWYA Cinematography - Payment Verification Notice*
+Dear ${booking.coupleTitle},
+We reviewed your payment slip for Booking ${booking.id}. Unfortunately, we could not verify it due to:
+"${reason.trim() || 'Slip unreadable'}"
+
+Please log into your client portal and upload a clear bank receipt screenshot:
+${getBaseUrl()}index.html?tab=portal&id=${booking.id}
+
+Thank you,
+- Dasun Kavinda (071 4 277 276)`;
+    sendCleanWhatsAppMessage(phone, msg);
+  }
+}
+
+function adminVerifyFullPayment() {
+  const booking = getActiveBooking();
+  if (!booking) return;
+
+  booking.balanceSlipVerified = true;
+  booking.balanceSlipRejected = false;
+  booking.balanceRejectReason = "";
+  booking.isFullPaid = true;
+  booking.balanceDue = 0;
+
+  saveDataToStorage(booking);
+  loadAdminData();
+  showToast("Full Payment Settled", `Marked 100% settled for ${booking.coupleTitle}`);
+
+  // Send Final Settlement Letterhead Invoice
+  sendInvoiceWhatsApp("full");
+}
+
+function sendInvoiceWhatsApp(type) {
+  const booking = getActiveBooking();
+  if (!booking) return;
+
+  const portalUrl = `${getBaseUrl()}index.html?tab=portal&id=${booking.id}`;
+  const phone = booking.primaryPhone || booking.bridePhone || booking.groomPhone;
+
+  let travelLine = "";
+  if (booking.travelCharges && booking.travelCharges.enabled && booking.travelCharges.totalTravelCost > 0) {
+    const tc = booking.travelCharges;
+    const parts = [];
+    if (tc.weddingCost > 0) parts.push(`Wedding ${tc.weddingKm}km: ${formatLKR(tc.weddingCost)} LKR`);
+    if (tc.homecomingCost > 0) parts.push(`Homecoming ${tc.homecomingKm}km: ${formatLKR(tc.homecomingCost)} LKR`);
+    if (tc.preshootCost > 0) parts.push(`Pre-shoot ${tc.preshootKm}km: ${formatLKR(tc.preshootCost)} LKR`);
+    if (tc.robeCost > 0) parts.push(`ROBE ${tc.robeKm}km: ${formatLKR(tc.robeCost)} LKR`);
+    if (tc.engagementCost > 0) parts.push(`Engagement ${tc.engagementKm}km: ${formatLKR(tc.engagementCost)} LKR`);
+    travelLine = `\n• Travel & Outstation Charges (80 LKR/km): +${formatLKR(tc.totalTravelCost)} LKR (${parts.join(', ')})`;
+  }
+
+  let msg = "";
+  if (type === "full" || booking.isFullPaid) {
+    msg = `🎉 *OCTEWYA CINEMATOGRAPHY - OFFICIAL SETTLEMENT INVOICE*
+Dear ${booking.coupleTitle},
+
+Your full payment has been verified and settled!
+
+📋 *Booking Ref:* ${booking.id}
+📅 *Wedding Date:* ${booking.weddingDate}
+📍 *Location:* ${booking.weddingLocation}
+
+💰 *Payment Breakdown:*
+• Base Package & Add-ons: ${formatLKR(booking.basePackageTotal || (booking.totalAmount - (booking.travelCharges?.totalTravelCost || 0)))} LKR${travelLine}
+• Total Invoice Value: ${formatLKR(booking.totalAmount)} LKR
+• Amount Paid: ${formatLKR(booking.totalAmount)} LKR (100% SETTLED ✓)
+• Remaining Balance: 0 LKR
+
+🌐 *Your Live Tracking Portal & Official Letterhead Document:*
+${portalUrl}
+
+Thank you for choosing OCTEWYA Cinematography!
+- Dasun Kavinda (071 4 277 276)`;
+  } else {
+    msg = `🎉 *OCTEWYA CINEMATOGRAPHY - OFFICIAL INVOICE & BOOKING CONFIRMED*
+Dear ${booking.coupleTitle},
+
+Your advance payment has been verified and your wedding videography booking is officially confirmed!
+
+📋 *Booking Ref:* ${booking.id}
+📅 *Wedding Date:* ${booking.weddingDate}
+📍 *Location:* ${booking.weddingLocation}
+📦 *Selected Package:* ${booking.selectedPackage?.name || (booking.isCustomPackage ? 'Custom Package' : 'Wedding Package')}
+
+💰 *Financial Breakdown:*
+• Base Package & Add-ons: ${formatLKR(booking.basePackageTotal || (booking.totalAmount - (booking.travelCharges?.totalTravelCost || 0)))} LKR${travelLine}
+• Total Package Value: ${formatLKR(booking.totalAmount)} LKR
+• Advance Paid: ${formatLKR(booking.advancePaid)} LKR (VERIFIED ✓)
+• Remaining Balance Due: ${formatLKR(booking.balanceDue)} LKR
+
+🌐 *Your Live Tracking Portal & Official Letterhead Invoice:*
+${portalUrl}
+
+You can track your live production progress, countdown, and download your official letterhead invoice anytime on your portal link above.
+
+- Dasun Kavinda (071 4 277 276)`;
+  }
+
+  sendCleanWhatsAppMessage(phone, msg);
+}
+
+function adminPromptDeleteBooking(bookingId) {
+  const booking = allBookings.find(b => b.id === bookingId);
+  if (!booking) return;
+
+  const pin = prompt(`⚠️ [DELETE BOOKING]\nAre you sure you want to permanently delete:\n${booking.coupleTitle} (${bookingId})?\n\nEnter Studio Security PIN to confirm:`);
+  if (!pin) return;
+
+  const currentPin = localStorage.getItem(STORAGE_KEY_PIN) || DEFAULT_ADMIN_PIN;
+  if (pin.trim() !== currentPin) {
+    alert("❌ Incorrect Studio Security PIN! Deletion aborted.");
+    return;
+  }
+
+  // Delete from Firestore Cloud
+  if (isFirebaseReady()) {
+    firestoreDb.collection("octewya_bookings").doc(bookingId).delete()
+      .then(() => console.log("Deleted from Firestore:", bookingId))
+      .catch(err => console.warn("Firestore delete error:", err));
+  }
+
+  // Delete locally
+  allBookings = allBookings.filter(b => b.id !== bookingId);
+  localStorage.setItem(STORAGE_KEY_BOOKINGS, JSON.stringify(allBookings));
+
+  if (currentBookingId === bookingId) {
+    currentBookingId = allBookings[0]?.id || "";
+  }
+
+  loadAdminData();
+  populateMasterCoupleSelector();
+  showToast("Booking Deleted", `Booking ${bookingId} has been deleted.`);
+}
+
+function openBalanceSlipModalAdmin() {
+  const booking = getActiveBooking();
+  if (!booking || !booking.balanceSlipUrl) {
+    showToast("Notice", "No balance slip uploaded yet.");
+    return;
+  }
+  const img = document.getElementById("zoomBalanceSlipImg");
+  if (img) img.src = booking.balanceSlipUrl;
+  document.getElementById("balanceSlipZoomModal")?.classList.remove("hidden");
+}
+
+function closeBalanceSlipModalAdmin() {
+  document.getElementById("balanceSlipZoomModal")?.classList.add("hidden");
+}
+
+let currentBalanceSlipData = null;
+
+function openBalanceSlipModal() {
+  currentBalanceSlipData = null;
+  const wrap = document.getElementById("balanceSlipPreviewWrap");
+  if (wrap) wrap.classList.add("hidden");
+  const modal = document.getElementById("balanceSlipModal");
+  if (modal) modal.classList.remove("hidden");
+}
+
+function closeBalanceSlipModal() {
+  document.getElementById("balanceSlipModal")?.classList.add("hidden");
+}
+
+function previewBalanceSlip(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  compressImage(file, 900, 0.75, function(compressedData) {
+    currentBalanceSlipData = compressedData;
+    const previewImg = document.getElementById("balanceSlipPreviewImg");
+    if (previewImg) previewImg.src = compressedData;
+    const fileName = document.getElementById("balanceSlipFileName");
+    if (fileName) fileName.textContent = file.name;
+    document.getElementById("balanceSlipPreviewWrap")?.classList.remove("hidden");
+  });
+}
+
+function submitBalanceSlip() {
+  if (!currentBalanceSlipData) {
+    alert("Please select your bank slip image before submitting!");
+    return;
+  }
+  const booking = getActiveBooking();
+  if (!booking) return;
+
+  booking.balanceSlipUrl = currentBalanceSlipData;
+  booking.balanceSlipSubmitted = true;
+  booking.balanceSlipVerified = false;
+  booking.balanceSlipRejected = false;
+  booking.balanceRejectReason = "";
+
+  saveDataToStorage(booking);
+  closeBalanceSlipModal();
+  loadPortalData(booking.id);
+  showToast(
+    currentLang === 'si' ? "Slip එක ලැබුණා!" : "Slip Uploaded!",
+    currentLang === 'si' ? "ඉතිරි මුදල් ගෙවීමේ Slip පත්‍රිකාව සාර්ථකව යොමුකරන ලදී. Studio එක විසින් Verify කරනු ඇත." : "Balance slip submitted for studio verification."
+  );
+
+  sendCleanWhatsAppMessage(
+    "0714277276",
+    `💳 *Client Uploaded Balance Payment Slip!*
+Couple: ${booking.coupleTitle} (ID: ${booking.id})
+Balance Amount: ${formatLKR(booking.balanceDue)} LKR
+Primary Contact: ${booking.primaryPhone || booking.bridePhone}
+
+👉 Open Studio Admin to review & verify:
+${getBaseUrl()}admin.html`
+  );
+}
+
+function toggleCustomBuilderCollapse() {
+  const body = document.getElementById("customBuilderBody");
+  const btn = document.getElementById("btnToggleCustomBuilder");
+  if (!body) return;
+  const isHidden = body.style.display === "none";
+  body.style.display = isHidden ? "block" : "none";
+  if (btn) btn.textContent = isHidden ? "Close Builder" : "Open Builder";
+  if (isHidden) calculateCustomPackage();
+}
+
+function calculateCustomPackage() {
+  let total = 0;
+  const items = [
+    { id: "cpWeddingVideo", priceId: "cpPriceWedding", rowId: "cpRow_wedding", name: "Wedding Video Coverage" },
+    { id: "cpSameDayEdit", priceId: "cpPriceSameDay", rowId: "cpRow_sameday", name: "Same Day Edit Video" },
+    { id: "cpHighlightVideo", priceId: "cpPriceHighlight", rowId: "cpRow_highlight", name: "Highlight Video / Storytelling" },
+    { id: "cpHomecomingVideo", priceId: "cpPriceHomecoming", rowId: "cpRow_homecoming", name: "Homecoming Video Coverage" },
+    { id: "cpEngagementVideo", priceId: "cpPriceEngagement", rowId: "cpRow_engagement", name: "Engagement Video Coverage" },
+  ];
+
+  items.forEach(it => {
+    const chk = document.getElementById(it.id);
+    const priceInput = document.getElementById(it.priceId);
+    const row = document.getElementById(it.rowId);
+    if (chk && priceInput) {
+      if (chk.checked) {
+        total += Number(priceInput.value) || 0;
+        if (row) row.classList.add("active");
+      } else {
+        if (row) row.classList.remove("active");
+      }
+    }
+  });
+
+  const display = document.getElementById("cpCalculatedTotal");
+  if (display) display.textContent = `${formatLKR(total)} LKR`;
+  return total;
+}
+
+function applyCustomPackageToBooking() {
+  const items = [
+    { id: "cpWeddingVideo", priceId: "cpPriceWedding", name: "Wedding Video Coverage" },
+    { id: "cpSameDayEdit", priceId: "cpPriceSameDay", name: "Same Day Edit Video" },
+    { id: "cpHighlightVideo", priceId: "cpPriceHighlight", name: "Highlight Video / Storytelling" },
+    { id: "cpHomecomingVideo", priceId: "cpPriceHomecoming", name: "Homecoming Video Coverage" },
+    { id: "cpEngagementVideo", priceId: "cpPriceEngagement", name: "Engagement Video Coverage" },
+  ];
+
+  const selectedCustomItems = [];
+  let total = 0;
+
+  items.forEach(it => {
+    const chk = document.getElementById(it.id);
+    const priceInput = document.getElementById(it.priceId);
+    if (chk && chk.checked && priceInput) {
+      const price = Number(priceInput.value) || 0;
+      selectedCustomItems.push({ name: it.name, price });
+      total += price;
+    }
+  });
+
+  if (selectedCustomItems.length === 0) {
+    alert("Please select at least one video service for the custom package!");
+    return;
+  }
+
+  currentSelection.weddingPackage = {
+    id: "custom_pkg",
+    name: "Custom Wedding Cinematography Package",
+    price: total,
+    badge: "Custom Package",
+    isCustom: true,
+    customItems: selectedCustomItems,
+    features: selectedCustomItems.map(it => `${it.name} (${formatLKR(it.price)} LKR)`)
+  };
+
+  // Deselect standard packages
+  document.querySelectorAll(".package-card").forEach(c => c.classList.remove("selected"));
+
+  // Check terms checkbox automatically
+  const termsChk = document.getElementById("termsCheck");
+  if (termsChk) termsChk.checked = true;
+  toggleBookingFormState();
+
+  updateQuoteSummary();
+  showToast("Custom Package Applied!", `Total: ${formatLKR(total)} LKR. Ready for booking.`);
+
+  // Scroll to booking form
+  const formSec = document.getElementById("bookingFormSection") || document.getElementById("bookingDetailsSection");
+  if (formSec) {
+    formSec.style.display = "block";
+    formSec.scrollIntoView({ behavior: "smooth" });
+  }
+}
+
+function handlePrimaryContactChange() {
+  const selected = document.querySelector('input[name="primaryContactOption"]:checked')?.value;
+  const otherInput = document.getElementById("primaryWhatsApp");
+  if (otherInput) {
+    otherInput.style.display = (selected === "other") ? "block" : "none";
+    if (selected === "other") otherInput.focus();
+  }
+}
+
+function toggleAdminTravelCharges(val) {
+  const container = document.getElementById("adminTravelInputsContainer");
+  if (container) container.style.display = val ? "block" : "none";
+  if (!val) {
+    closeAdminTravelCharges();
+  }
+}
+
+function calculateAdminTravel() {
+  const getKm = (id) => Math.max(0, parseFloat(document.getElementById(id)?.value) || 0);
+  const setCost = (id, cost) => {
+    const el = document.getElementById(id);
+    if (el) el.value = cost > 0 ? cost : "";
+  };
+
+  const wKm = getKm("trWeddingKm");
+  const hKm = getKm("trHomecomingKm");
+  const pKm = getKm("trPreshootKm");
+  const rKm = getKm("trRobeKm");
+  const eKm = getKm("trEngagementKm");
+
+  setCost("trWeddingCost", wKm * 80);
+  setCost("trHomecomingCost", hKm * 80);
+  setCost("trPreshootCost", pKm * 80);
+  setCost("trRobeCost", rKm * 80);
+  setCost("trEngagementCost", eKm * 80);
+
+  calculateAdminTravelTotalManual();
+}
+
+function calculateAdminTravelTotalManual() {
+  const getCost = (id) => Math.max(0, parseFloat(document.getElementById(id)?.value) || 0);
+  const total = getCost("trWeddingCost") + getCost("trHomecomingCost") + getCost("trPreshootCost") + getCost("trRobeCost") + getCost("trEngagementCost");
+  const display = document.getElementById("trCalculatedTotal") || document.getElementById("trTotalTravelCostDisplay");
+  if (display) display.textContent = `${formatLKR(total)} LKR`;
+  return total;
+}
+
+function adminSaveTravelCharges() {
+  const booking = getActiveBooking();
+  if (!booking) {
+    alert("No active booking selected!");
+    return;
+  }
+
+  const getKm = (id) => Math.max(0, parseFloat(document.getElementById(id)?.value) || 0);
+  const getCost = (id) => Math.max(0, parseFloat(document.getElementById(id)?.value) || 0);
+
+  const weddingKm = getKm("trWeddingKm");
+  const weddingCost = getCost("trWeddingCost");
+  const homecomingKm = getKm("trHomecomingKm");
+  const homecomingCost = getCost("trHomecomingCost");
+  const preshootKm = getKm("trPreshootKm");
+  const preshootCost = getCost("trPreshootCost");
+  const robeKm = getKm("trRobeKm");
+  const robeCost = getCost("trRobeCost");
+  const engagementKm = getKm("trEngagementKm");
+  const engagementCost = getCost("trEngagementCost");
+  const totalTravelCost = weddingCost + homecomingCost + preshootCost + robeCost + engagementCost;
+
+  booking.travelCharges = {
+    enabled: true,
+    ratePerKm: 80,
+    weddingKm,
+    weddingCost,
+    homecomingKm,
+    homecomingCost,
+    preshootKm,
+    preshootCost,
+    robeKm,
+    robeCost,
+    engagementKm,
+    engagementCost,
+    totalTravelCost,
+    updatedAt: new Date().toISOString()
+  };
+
+  const travelToggle = document.getElementById("adminTravelToggle");
+  if (travelToggle) travelToggle.checked = true;
+
+  recalculateBookingFinancials(booking);
+  saveDataToStorage(booking);
+  loadAdminData();
+  showToast("Travel Charges Saved", `Total of ${formatLKR(totalTravelCost)} LKR added to booking.`);
+}
+
+function closeAdminTravelCharges() {
+  const booking = getActiveBooking();
+  if (!booking) return;
+
+  booking.travelCharges = {
+    enabled: false,
+    ratePerKm: 80,
+    weddingKm: 0,
+    weddingCost: 0,
+    homecomingKm: 0,
+    homecomingCost: 0,
+    preshootKm: 0,
+    preshootCost: 0,
+    robeKm: 0,
+    robeCost: 0,
+    engagementKm: 0,
+    engagementCost: 0,
+    totalTravelCost: 0,
+    updatedAt: new Date().toISOString()
+  };
+
+  const travelToggle = document.getElementById("adminTravelToggle");
+  if (travelToggle) travelToggle.checked = false;
+  const travelContainer = document.getElementById("adminTravelInputsContainer");
+  if (travelContainer) travelContainer.style.display = "none";
+
+  const setVal = (id) => { const el = document.getElementById(id); if (el) el.value = ""; };
+  setVal("trWeddingKm");
+  setVal("trWeddingCost");
+  setVal("trHomecomingKm");
+  setVal("trHomecomingCost");
+  setVal("trPreshootKm");
+  setVal("trPreshootCost");
+  setVal("trRobeKm");
+  setVal("trRobeCost");
+  setVal("trEngagementKm");
+  setVal("trEngagementCost");
+  const display = document.getElementById("trCalculatedTotal") || document.getElementById("trTotalTravelCostDisplay");
+  if (display) display.textContent = "0 LKR";
+
+  recalculateBookingFinancials(booking);
+  saveDataToStorage(booking);
+  loadAdminData();
+  showToast("Travel Charges Closed", "Travel charges removed from booking.");
 }
 
 function toggleAdminExpressDelivery(val) {
   const booking = getActiveBooking();
+  if (!booking) return;
   booking.expressDeliveryAvailable = val;
-  saveDataToStorage();
+  saveDataToStorage(booking);
   loadAdminData();
-  showToast("Express Delivery Setting", val ? "Enabled for client view" : "Disabled");
+  showToast("Express Service Setting", val ? "Enabled for client view" : "Disabled");
 }
 
 function copyPortalLink() {
@@ -1952,7 +2866,7 @@ function acceptTermsFromModal() {
   if (chk) chk.checked = true;
   toggleBookingFormState();
   closeTermsModal();
-  if (currentSelection.weddingPackage) {
+  if (hasAnyPackageSelected()) {
     const formSec = document.getElementById("bookingFormSection") || document.getElementById("bookingDetailsSection");
     if (formSec) {
       setTimeout(() => {

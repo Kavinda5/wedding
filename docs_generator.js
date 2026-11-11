@@ -4,15 +4,32 @@
  * 2. Legal Client Agreement & Contract Audit Document
  */
 
-function printQuotation() {
-  const booking = getActiveBooking();
+function printQuotation(type, customBooking) {
+  let booking = customBooking;
+  if (!booking && typeof getActiveBooking === 'function') {
+    booking = getActiveBooking();
+  }
+  if (typeof type === 'string' && typeof allBookings !== 'undefined') {
+    const found = allBookings.find(b => b.id === type);
+    if (found) {
+      booking = found;
+      type = 'advance';
+    }
+  }
   if (!booking) return;
 
   const quoteWin = window.open('', '_blank');
   const items = [];
-  if (booking.selectedPackage) {
+
+  // Check if custom package
+  if (booking.customPackageItems && booking.customPackageItems.length > 0) {
+    booking.customPackageItems.forEach(cp => {
+      items.push({ name: cp.name, price: cp.price });
+    });
+  } else if (booking.selectedPackage) {
     items.push({ name: booking.selectedPackage.name + " (Wedding Day Coverage)", price: booking.selectedPackage.price });
   }
+
   if (booking.selectedHomecoming) {
     items.push({ name: booking.selectedHomecoming.name, price: booking.selectedHomecoming.price });
   }
@@ -26,12 +43,69 @@ function printQuotation() {
     items.push({ name: a.name + " (" + (a.note || "Addon") + ")", price: a.price });
   });
 
+  if (booking.expressDeliveryAccepted) {
+    const isVip = booking.selectedPackage?.id === "pkg_03" || booking.selectedPackage?.id === "pkg_vip";
+    items.push({ name: "Super Fast Editing Service (VIP Fast-Track)", price: isVip ? 15000 : 10000 });
+  }
+
+  if (booking.travelCharges?.enabled && booking.travelCharges.totalTravelCost > 0) {
+    if (booking.travelCharges.weddingCost > 0) {
+      items.push({
+        name: `Travel & Outstation Charges - Wedding Day (${booking.travelCharges.weddingKm || 0} km @ 80 LKR/km)`,
+        price: booking.travelCharges.weddingCost
+      });
+    }
+    if (booking.travelCharges.homecomingCost > 0) {
+      items.push({
+        name: `Travel & Outstation Charges - Homecoming (${booking.travelCharges.homecomingKm || 0} km @ 80 LKR/km)`,
+        price: booking.travelCharges.homecomingCost
+      });
+    }
+    if (booking.travelCharges.preshootCost > 0) {
+      items.push({
+        name: `Travel & Outstation Charges - Pre-Shoot (${booking.travelCharges.preshootKm || 0} km @ 80 LKR/km)`,
+        price: booking.travelCharges.preshootCost
+      });
+    }
+    if (booking.travelCharges.robeCost > 0) {
+      items.push({
+        name: `Travel & Outstation Charges - ROBE Shoot (${booking.travelCharges.robeKm || 0} km @ 80 LKR/km)`,
+        price: booking.travelCharges.robeCost
+      });
+    }
+    if (booking.travelCharges.engagementCost > 0) {
+      items.push({
+        name: `Travel & Outstation Charges - Engagement Coverage (${booking.travelCharges.engagementKm || 0} km @ 80 LKR/km)`,
+        price: booking.travelCharges.engagementCost
+      });
+    }
+  }
+
+  const isFullSettled = type === "full" || booking.isFullPaid || (booking.isAdvanceVerified && booking.balanceDue <= 0);
+  const isAdvanceVerified = type === "advance" || booking.isAdvanceVerified;
+
+  let docTitle = "OFFICIAL QUOTATION";
+  let docRef = `QUO-${booking.id}`;
+  let statusBadgeHtml = `<span style="background: #F59E0B; color: #000; padding: 4px 10px; border-radius: 4px; font-weight: 700; font-size: 11px;">PROVISIONAL ESTIMATE</span>`;
+
+  if (isFullSettled) {
+    docTitle = "OFFICIAL FINAL SETTLEMENT INVOICE";
+    docRef = `INV-FULL-${booking.id}`;
+    statusBadgeHtml = `<span style="background: #10B981; color: #fff; padding: 4px 10px; border-radius: 4px; font-weight: 700; font-size: 11px;">100% FULLY PAID & SETTLED ✓</span>`;
+  } else if (isAdvanceVerified) {
+    docTitle = "OFFICIAL INVOICE & CONFIRMATION";
+    docRef = `INV-${booking.id}`;
+    statusBadgeHtml = `<span style="background: #1E3A8A; color: #93C5FD; border: 1px solid #3B82F6; padding: 4px 10px; border-radius: 4px; font-weight: 700; font-size: 11px;">ADVANCE VERIFIED & BOOKING CONFIRMED ✓</span>`;
+  }
+
+  const primaryPhone = booking.primaryPhone || booking.bridePhone || booking.groomPhone || "";
+
   const html = `
 <!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
-  <title>OCTEWYA Quotation - ${booking.coupleTitle}</title>
+  <title>${docTitle} - ${booking.coupleTitle}</title>
   <style>
     @page { size: A4 portrait; margin: 0; }
     body {
@@ -61,10 +135,10 @@ function printQuotation() {
       margin-bottom: 20px;
     }
     .doc-title {
-      font-size: 24px;
+      font-size: 22px;
       font-weight: 800;
       color: #000;
-      letter-spacing: 1px;
+      letter-spacing: 0.5px;
     }
     .doc-sub {
       font-size: 11px;
@@ -115,7 +189,7 @@ function printQuotation() {
     }
     .totals-box {
       float: right;
-      width: 280px;
+      width: 320px;
       margin-bottom: 20px;
     }
     .total-line {
@@ -162,6 +236,10 @@ function printQuotation() {
       color: #fff;
       padding: 12px 20px;
       text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
     }
     .btn-print {
       background: #D4AF37;
@@ -181,20 +259,20 @@ function printQuotation() {
 </head>
 <body>
   <div class="print-bar">
-    <span>Click the button to download or print this official quotation: </span>
+    <span>Click the button to download or print this official document: </span>
     <button class="btn-print" onclick="window.print()">Print / Save as PDF</button>
   </div>
 
   <div class="page-sheet">
     <div class="doc-header">
       <div>
-        <div class="doc-title">OFFICIAL QUOTATION</div>
-        <div class="doc-sub">OCTEWYA WEDDING CINEMATOGRAPHY</div>
+        <div class="doc-title">${docTitle}</div>
+        <div class="doc-sub">OCTEWYA WEDDING CINEMATOGRAPHY • DASUN KAVINDA</div>
       </div>
       <div class="doc-meta">
-        <div><strong>Quote Ref:</strong> QUO-${booking.id}</div>
+        <div><strong>Ref:</strong> ${docRef}</div>
         <div><strong>Date:</strong> ${new Date().toLocaleDateString('en-GB')}</div>
-        <div><strong>Valid Until:</strong> Event Date</div>
+        <div style="margin-top: 4px;">${statusBadgeHtml}</div>
       </div>
     </div>
 
@@ -212,17 +290,13 @@ function printQuotation() {
         <span>${booking.weddingLocation}</span>
       </div>
       <div class="detail-item">
-        <strong>CONTACT NUMBERS</strong>
-        <span>${booking.bridePhone} / ${booking.groomPhone}</span>
+        <strong>PRIMARY WHATSAPP (UPDATES)</strong>
+        <span>${primaryPhone}</span>
       </div>
       ${booking.homecomingDate ? `
       <div class="detail-item">
-        <strong>HOMECOMING DATE</strong>
-        <span>${booking.homecomingDate}</span>
-      </div>
-      <div class="detail-item">
-        <strong>HOMECOMING VENUE</strong>
-        <span>${booking.homecomingLocation || booking.weddingLocation}</span>
+        <strong>HOMECOMING DATE & VENUE</strong>
+        <span>${booking.homecomingDate} - ${booking.homecomingLocation || booking.weddingLocation}</span>
       </div>` : ''}
       ${booking.preshootDate ? `
       <div class="detail-item">
@@ -250,23 +324,23 @@ function printQuotation() {
 
     <div class="totals-box">
       <div class="total-line bold">
-        <span>Total Package:</span>
+        <span>Total Package Value:</span>
         <span>${Number(booking.totalAmount).toLocaleString()} LKR</span>
       </div>
       <div class="total-line advance">
-        <span>Advance Paid:</span>
-        <span>- ${Number(booking.advancePaid).toLocaleString()} LKR</span>
+        <span>Advance Paid ${isAdvanceVerified ? '(Verified ✓)' : '(Pending Verification)'}:</span>
+        <span>${isAdvanceVerified ? `- ${Number(booking.advancePaid).toLocaleString()} LKR` : `0 LKR (${Number(booking.advancePaid).toLocaleString()} LKR Pending)`}</span>
       </div>
       <div class="total-line balance">
-        <span>Balance Due (Before Event):</span>
-        <span>${Number(booking.balanceDue).toLocaleString()} LKR</span>
+        <span>Remaining Balance Due:</span>
+        <span>${isFullSettled ? '0 LKR (SETTLED ✓)' : `${Number(isAdvanceVerified ? booking.balanceDue : booking.totalAmount).toLocaleString()} LKR`}</span>
       </div>
     </div>
 
     <div class="clear"></div>
 
     <div class="payment-instructions">
-      <strong>Payment Information:</strong>
+      <strong>Payment & Bank Details:</strong>
       <div class="bank-grid">
         <div>
           <strong>Sampath Bank:</strong><br>
@@ -280,7 +354,7 @@ function printQuotation() {
         </div>
       </div>
       <div style="margin-top: 6px; font-size: 11px; color: #555;">
-        * Note: Full payment must be made at least 3 days prior to the wedding event.
+        * Note: Full payment must be made at least 3 days prior to the wedding event. Inquiries: Dasun Kavinda (071 4 277 276).
       </div>
     </div>
   </div>
@@ -291,6 +365,9 @@ function printQuotation() {
   quoteWin.document.write(html);
   quoteWin.document.close();
 }
+
+window.generateLetterheadInvoice = printQuotation;
+
 
 /**
  * 2. LEGAL CLIENT AGREEMENT & CONTRACT AUDIT DOCUMENT

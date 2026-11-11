@@ -86,11 +86,13 @@ const TRANSLATIONS = {
     urgentAlertTitle: "URGENT: FINAL PAYMENT DUE BEFORE WEDDING",
     urgentAlertDesc: "Your wedding day is coming up! As per our terms, please settle the remaining balance before the wedding day or contact Dasun Kavinda directly.",
     
-    // Super Fast Delivery
-    vipExpressBadge: "VIP EXPRESS DELIVERY",
-    superFastTitle: "Super Fast Premiere Delivery",
-    superFastDesc: "Want your full wedding film completed and delivered within 2 to 3 days instead of standard 4 months?",
-    btnAcceptExpress: "Yes, I Want Super Fast Delivery",
+    // Super Fast Editing Service
+    vipExpressBadge: "VIP FAST-TRACK",
+    superFastTitle: "Super Fast Editing Service",
+    superFastDesc: "We offer an exclusive fast track editing service, ensuring your wedding video is fully edited by the day following your wedding.",
+    btnAcceptExpress: "Request Super Fast Editing Service",
+    lblPrimaryWhatsApp: "Primary WhatsApp for Updates & Invoices *",
+    primaryWhatsAppHint: "The primary contact who manages wedding arrangements will receive all live video updates and official invoices here.",
     
     // Steppers
     psTrackerTitle: "Pre-Shoot Video Editing Progress",
@@ -216,11 +218,13 @@ const TRANSLATIONS = {
     urgentAlertTitle: "අවධානය පිණිසයි: මංගල දිනයට පෙර ඉතිරි මුදල ගෙවන්න",
     urgentAlertDesc: "ඔබගේ මංගල දිනය ඉතා ආසන්නයි. කරුණාකර නියමිත පරිදි ඉතිරි මුදල ගෙවා අවසන් කරන්න හෝ Dasun Kavinda අමතන්න.",
     
-    // Super Fast Delivery
-    vipExpressBadge: "VIP EXPRESS DELIVERY",
-    superFastTitle: "Super Fast Premiere Delivery",
-    superFastDesc: "සාමාන්‍යයෙන් මාස 4ක් ගතවන වීඩියෝව දින 2ක් හෝ 3ක් ඇතුළත සම්පූර්ණයෙන් සකසා ලබාගැනීමට කැමතිද?",
-    btnAcceptExpress: "ඔව්, මට Super Fast Delivery අවශ්‍යයි",
+    // Super Fast Editing Service
+    vipExpressBadge: "VIP FAST-TRACK",
+    superFastTitle: "Super Fast Editing Service",
+    superFastDesc: "We offer an exclusive fast track editing service, ensuring your wedding video is fully edited by the day following your wedding. (මංගල උත්සවය නිමවූ පසුදිනම සම්පූර්ණ වීඩියෝව සංස්කරණය කර ලබාදීමේ සුවිශේෂී සේවාවකි).",
+    btnAcceptExpress: "Super Fast Editing Service ඉල්ලුම් කරන්න",
+    lblPrimaryWhatsApp: "සියලුම Updates & Invoices ලැබිය යුතු ප්‍රධාන WhatsApp අංකය *",
+    primaryWhatsAppHint: "Wedding planning සිදුකරන ප්‍රධාන පාර්ශවයට සියලුම Video Updates සහ Invoices ලැබීමට මෙම අංකය භාවිතා කෙරේ.",
     
     // Steppers
     psTrackerTitle: "Pre-Shoot වීඩියෝ සංස්කරණ තත්ත්වය",
