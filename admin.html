@@ -383,6 +383,54 @@
               <div class="express-status-indicator mt-1" id="adminTravelStatusText">Status: Not Applied (0 LKR)</div>
             </div>
 
+            <!-- Special Studio Discount Management Box -->
+            <div class="admin-inner-box mt-3" id="adminDiscountBox">
+              <div class="toggle-header">
+                <div>
+                  <h4 class="inner-title"><i class="fa-solid fa-tags"></i> Special Studio Discount</h4>
+                  <p class="small-text">මෙම Booking එක සඳහා Discount එකක් (Fixed Amount හෝ Percentage %) ලබාදීමට:</p>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" id="adminDiscountToggle" onchange="toggleAdminDiscount(this.checked)">
+                  <span class="slider round"></span>
+                </label>
+              </div>
+
+              <div id="adminDiscountInputsContainer" style="display: none; margin-top: 14px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 12px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                  <div class="travel-session-box" style="background: rgba(255,255,255,0.02); padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border);">
+                    <label style="font-size: 11.5px; font-weight: 700; color: #fff; display: block; margin-bottom: 4px;">Discount Type</label>
+                    <select id="adminDiscountType" class="form-select-dark" style="width: 100%; padding: 6px 8px; font-size: 12px;" onchange="handleDiscountTypeChange()">
+                      <option value="amount">Fixed Amount (LKR)</option>
+                      <option value="percentage">Percentage (%)</option>
+                    </select>
+                  </div>
+
+                  <div class="travel-session-box" style="background: rgba(255,255,255,0.02); padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border);">
+                    <label id="adminDiscountValueLabel" style="font-size: 11.5px; font-weight: 700; color: #fff; display: block; margin-bottom: 4px;">Discount Amount (LKR)</label>
+                    <input type="number" id="adminDiscountValue" placeholder="e.g. 10000" style="width: 100%; padding: 6px 8px; font-size: 13px; color: #10B981; font-weight: 700;" min="0" oninput="calculateAdminDiscount()">
+                  </div>
+
+                  <div class="travel-session-box" style="background: rgba(255,255,255,0.02); padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border); grid-column: span 2;">
+                    <label style="font-size: 11.5px; font-weight: 700; color: #fff; display: block; margin-bottom: 4px;">Discount Reason / Custom Note</label>
+                    <input type="text" id="adminDiscountReason" placeholder="ඔබට කැමති සටහනක් type කරන්න (e.g. Seasonal Offer, Family & Friends Discount...)" style="width: 100%; padding: 6px 10px; font-size: 12px;">
+                  </div>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px; background: rgba(16,185,129,0.08); padding: 8px 12px; border-radius: 6px; border: 1px solid rgba(16,185,129,0.3);">
+                  <div>
+                    <span style="font-size: 11px; color: var(--text-muted);">Calculated Discount Deduction:</span>
+                    <strong id="adminCalculatedDiscountText" style="font-size: 15px; color: #10B981; display: block;">- 0 LKR</strong>
+                  </div>
+                  <div style="display: flex; gap: 6px;">
+                    <button type="button" class="btn-danger-sm" style="padding: 5px 10px; font-size: 11px;" onclick="closeAdminDiscount()">Remove</button>
+                    <button type="button" class="btn-success-sm" style="padding: 5px 12px; font-size: 11px;" onclick="adminSaveDiscount()">Apply & Save</button>
+                  </div>
+                </div>
+              </div>
+              <div class="express-status-indicator mt-1" id="adminDiscountStatusText">Status: No Discount Applied</div>
+            </div>
+
             <!-- Super Fast Editing Service Availability Switch -->
             <div class="admin-inner-box mt-3">
               <div class="toggle-header">

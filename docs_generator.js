@@ -85,6 +85,17 @@ function printQuotation(type, customBooking) {
     }
   }
 
+  // Check if Special Studio Discount exists
+  if (booking.discount?.enabled && Number(booking.discount.amount || 0) > 0) {
+    const discLabel = booking.discount.reason 
+      ? `Special Studio Discount (${booking.discount.reason})` 
+      : `Special Studio Discount`;
+    items.push({
+      name: discLabel,
+      price: -Number(booking.discount.amount)
+    });
+  }
+
   const isFullSettled = type === "full" || booking.isFullPaid || (booking.isAdvanceVerified && booking.balanceDue <= 0);
   const isAdvanceVerified = type === "advance" || booking.isAdvanceVerified;
 
@@ -493,8 +504,8 @@ function printQuotation(type, customBooking) {
         ${items.map((it, idx) => `
           <tr>
             <td class="item-idx">${String(idx + 1).padStart(2, '0')}</td>
-            <td class="item-desc">${it.name}</td>
-            <td class="item-amount">${Number(it.price).toLocaleString()} LKR</td>
+            <td class="item-desc" style="${it.price < 0 ? 'color: #047857; font-weight: 700;' : ''}">${it.name}</td>
+            <td class="item-amount" style="${it.price < 0 ? 'color: #047857;' : ''}">${it.price < 0 ? `- ${Number(Math.abs(it.price)).toLocaleString()}` : Number(it.price).toLocaleString()} LKR</td>
           </tr>
         `).join("")}
       </tbody>

@@ -362,8 +362,50 @@
                 <small class="helper-text" data-i18n="advanceInputHint">සාමාන්‍ය අත්තිකාරම 10,000 LKR වේ. ඔබ වෙනත් මුදලක් (උදා: 5,000 හෝ 15,000) තැන්පත් කළේ නම් එම මුදල මෙහි සඳහන් කරන්න.</small>
               </div>
 
-              <!-- Two Official Bank Accounts -->
+              <!-- Payment Method Selector: Online Card vs Bank Transfer -->
               <div class="form-group col-span-2">
+                <label><i class="fa-solid fa-credit-card"></i> <span>Select Payment Method (ගෙවීම් ක්‍රමය තෝරන්න)</span></label>
+                <div class="radio-group-wrap" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 4px;">
+                  <label class="radio-label" style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-gold); padding: 12px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 10px;">
+                    <input type="radio" name="bookingPaymentMethod" value="bank" checked onchange="handlePaymentMethodChange(this.value)">
+                    <div>
+                      <strong style="display: block; font-size: 13px; color: #fff;"><i class="fa-solid fa-building-columns" style="color: var(--gold);"></i> Direct Bank Transfer</strong>
+                      <span style="font-size: 11px; color: var(--text-muted);">සම්පත් හෝ BOC ගිණුමට තැන්පත් කර Slip එක upload කරන්න</span>
+                    </div>
+                  </label>
+                  <label class="radio-label" style="background: rgba(255,255,255,0.03); border: 1px solid var(--border); padding: 12px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 10px;">
+                    <input type="radio" name="bookingPaymentMethod" value="card" onchange="handlePaymentMethodChange(this.value)">
+                    <div>
+                      <strong style="display: block; font-size: 13px; color: #fff;"><i class="fa-brands fa-cc-visa" style="color: #60A5FA;"></i> <i class="fa-brands fa-cc-mastercard" style="color: #F87171;"></i> Online Card Payment</strong>
+                      <span style="font-size: 11px; color: var(--text-muted);">Visa, MasterCard හෝ Credit/Debit කාඩ්පතින් ආරක්ෂිතව ගෙවන්න</span>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Card Payment Checkout Simulation Box -->
+              <div class="form-group col-span-2 hidden" id="cardPaymentGatewayBox">
+                <div style="background: linear-gradient(135deg, rgba(30,58,138,0.2) 0%, rgba(15,23,42,0.95) 100%); border: 1px solid #3B82F6; border-radius: 8px; padding: 16px; text-align: center;">
+                  <div style="display: flex; justify-content: center; align-items: center; gap: 10px; margin-bottom: 8px;">
+                    <i class="fa-solid fa-shield-halved" style="color: #60A5FA; font-size: 20px;"></i>
+                    <strong style="color: #fff; font-size: 14px;">PayHere Secure 256-bit SSL Payment Gateway</strong>
+                  </div>
+                  <p style="font-size: 12px; color: #94A3B8; margin: 0 0 14px;">
+                    ඔබේ කාඩ්පත් විස්තර සම්පූර්ණයෙන්ම ආරක්ෂිතව බැංකු පද්ධතිය (Gateway) හරහා සැකසේ.
+                  </p>
+                  <div style="display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; margin-bottom: 12px;">
+                    <span style="background: rgba(255,255,255,0.06); padding: 6px 12px; border-radius: 4px; font-size: 12px; color: #E2E8F0;">Amount: <strong class="gold" id="cardPayAmountPreview">10,000 LKR</strong></span>
+                    <span style="background: rgba(255,255,255,0.06); padding: 6px 12px; border-radius: 4px; font-size: 12px; color: #10B981;"><i class="fa-solid fa-lock"></i> SSL Secured</span>
+                  </div>
+                  <div id="cardPaymentSuccessBadge" class="hidden" style="background: rgba(16,185,129,0.15); border: 1px solid #10B981; color: #10B981; padding: 10px; border-radius: 6px; font-size: 13px; font-weight: 700; margin-top: 10px;">
+                    <i class="fa-solid fa-circle-check"></i> Card Payment Processed Successfully! (Ref: <span id="cardTxnRef"></span>)
+                  </div>
+                </div>
+              </div>
+
+              <!-- Bank Transfer Details & Slip Upload Container -->
+              <div id="bankTransferContainer" class="form-group col-span-2">
+                <!-- Two Official Bank Accounts -->
                 <div class="bank-details-card">
                   <div class="bank-info-header">
                     <i class="fa-solid fa-building-columns" style="font-size: 26px; color: var(--gold);"></i>
@@ -542,6 +584,10 @@
             </div>
 
             <div class="quote-totals mt-2">
+              <div class="total-row" id="portalDiscountRow" style="display: none; color: #10B981;">
+                <span>Special Studio Discount:</span>
+                <span class="price-val" id="portalDiscountAmount" style="color: #10B981;">- 0 LKR</span>
+              </div>
               <div class="total-row">
                 <span data-i18n="advancePaid">Advance Paid:</span>
                 <span class="price-val" id="portalAdvancePaid" style="color: var(--accent-green);">10,000 LKR</span>

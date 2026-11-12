@@ -1126,6 +1126,25 @@ function removeBankSlip() {
   document.getElementById("slipUploadArea")?.classList.remove("hidden");
 }
 
+function handlePaymentMethodChange(method) {
+  const bankContainer = document.getElementById("bankTransferContainer");
+  const cardBox = document.getElementById("cardPaymentGatewayBox");
+  const advanceInput = document.getElementById("actualAdvancePaid");
+  const preview = document.getElementById("cardPayAmountPreview");
+
+  if (preview && advanceInput) {
+    preview.textContent = `${formatLKR(advanceInput.value || 10000)} LKR`;
+  }
+
+  if (method === 'card') {
+    if (bankContainer) bankContainer.classList.add("hidden");
+    if (cardBox) cardBox.classList.remove("hidden");
+  } else {
+    if (cardBox) cardBox.classList.add("hidden");
+    if (bankContainer) bankContainer.classList.remove("hidden");
+  }
+}
+
 // ==========================================
 // 7. BOOKING SUBMISSION & DIRECT LINK
 // ==========================================
@@ -1160,6 +1179,11 @@ function handleBookingSubmit(e) {
     const otherVal = document.getElementById("primaryWhatsApp")?.value.trim();
     primaryPhone = otherVal || bridePhone;
   }
+
+  // Payment Method Selection (Bank Slip vs Online Card)
+  const paymentMethod = document.querySelector('input[name="bookingPaymentMethod"]:checked')?.value || "bank";
+  const isCardPay = paymentMethod === "card";
+  const cardTxnId = isCardPay ? `PAYHERE-${Date.now()}` : "";
 
   let total = 0;
   if (currentSelection.weddingPackage) total += currentSelection.weddingPackage.price;
@@ -1212,12 +1236,14 @@ function handleBookingSubmit(e) {
     },
     totalAmount: total,
     advancePaid: actualAdvance,
-    isAdvanceVerified: false,
+    paymentMethod: paymentMethod,
+    cardTransactionId: cardTxnId,
+    isAdvanceVerified: isCardPay ? true : false,
     isAdvanceRejected: false,
     advanceRejectReason: "",
-    isBookingConfirmed: false,
+    isBookingConfirmed: isCardPay ? true : false,
     isFullPaid: false,
-    balanceDue,
+    balanceDue: isCardPay ? Math.max(0, total - actualAdvance) : balanceDue,
     balanceSlipUrl: "",
     balanceSlipSubmitted: false,
     balanceSlipVerified: false,
@@ -1348,6 +1374,19 @@ function loadPortalData(bookingId, skipSubscribe) {
       totalAmountEl.innerHTML = `${formatLKR(booking.totalAmount)} LKR <small style="display:block; font-size:11.5px; color:var(--gold); font-weight:normal;">(Package: ${formatLKR(booking.basePackageTotal || (booking.totalAmount - booking.travelCharges.totalTravelCost))} LKR + Travel: ${formatLKR(booking.travelCharges.totalTravelCost)} LKR)</small>`;
     } else {
       totalAmountEl.textContent = `${formatLKR(booking.totalAmount)} LKR`;
+    }
+  }
+
+  // Display Discount row in Portal if exists
+  const discountRow = document.getElementById("portalDiscountRow");
+  const discountAmtEl = document.getElementById("portalDiscountAmount");
+  if (discountRow && discountAmtEl) {
+    if (booking.discount && booking.discount.enabled && Number(booking.discount.amount || 0) > 0) {
+      discountRow.style.display = "flex";
+      const discNote = booking.discount.reason ? ` (${booking.discount.reason})` : '';
+      discountAmtEl.textContent = `- ${formatLKR(booking.discount.amount)} LKR${discNote}`;
+    } else {
+      discountRow.style.display = "none";
     }
   }
   
@@ -2016,6 +2055,30 @@ function loadAdminData() {
   const trTotalDisplay = document.getElementById("trCalculatedTotal") || document.getElementById("trTotalTravelCostDisplay");
   if (trTotalDisplay) trTotalDisplay.textContent = `${formatLKR(tc.totalTravelCost || 0)} LKR`;
 
+  // Special Studio Discount Box in Admin
+  const discToggle = document.getElementById("adminDiscountToggle");
+  const discContainer = document.getElementById("adminDiscountInputsContainer");
+  const discStatusText = document.getElementById("adminDiscountStatusText");
+  const discTypeSelect = document.getElementById("adminDiscountType");
+  const discValueInput = document.getElementById("adminDiscountValue");
+  const discReasonInput = document.getElementById("adminDiscountReason");
+  const discCalcText = document.getElementById("adminCalculatedDiscountText");
+  const discValLabel = document.getElementById("adminDiscountValueLabel");
+
+  const disc = activeBooking.discount || { enabled: false, type: 'amount', value: 0, amount: 0, reason: '' };
+  if (discToggle) discToggle.checked = !!disc.enabled;
+  if (discContainer) discContainer.style.display = disc.enabled ? "block" : "none";
+  if (discTypeSelect) discTypeSelect.value = disc.type || 'amount';
+  if (discValLabel) discValLabel.textContent = disc.type === 'percentage' ? "Discount Percentage (%)" : "Discount Amount (LKR)";
+  if (discValueInput) discValueInput.value = disc.value > 0 ? disc.value : (disc.amount > 0 ? disc.amount : "");
+  if (discReasonInput) discReasonInput.value = disc.reason || "";
+  if (discCalcText) discCalcText.textContent = disc.amount > 0 ? `- ${formatLKR(disc.amount)} LKR` : "- 0 LKR";
+  if (discStatusText) {
+    discStatusText.textContent = disc.enabled && disc.amount > 0
+      ? `Status: Applied (-${formatLKR(disc.amount)} LKR Discount Active)`
+      : "Status: No Discount Applied";
+  }
+
   // Super Fast Editing Service Switch
   const expressToggle = document.getElementById("adminExpressToggle");
   if (expressToggle) expressToggle.checked = !!activeBooking.expressDeliveryAvailable;
@@ -2079,6 +2142,7 @@ function renderAdminTable(bookingsList) {
           ${b.selectedAddons?.length > 0 ? `<span class="badge-gold" style="font-size: 9.5px; padding: 2px 6px;">+${b.selectedAddons.length} Addons</span>` : ''}
           ${b.expressDeliveryAccepted ? '<span class="vip-tag" style="font-size: 9.5px; padding: 2px 6px;"><i class="fa-solid fa-bolt"></i> Fast-Track</span>' : ''}
           ${b.travelCharges?.enabled && b.travelCharges.totalTravelCost > 0 ? '<span class="badge-gold" style="font-size: 9.5px; padding: 2px 6px;"><i class="fa-solid fa-car"></i> Travel</span>' : ''}
+          ${b.discount?.enabled && b.discount.amount > 0 ? `<span class="badge-success" style="font-size: 9.5px; padding: 2px 6px;"><i class="fa-solid fa-tags"></i> -${formatLKR(b.discount.amount)}</span>` : ''}
         </div>
       </td>
       <td>
@@ -2249,6 +2313,19 @@ function renderAdminDossier(booking) {
       `);
     }
 
+    // Special Studio Discount in Dossier
+    if (booking.discount && booking.discount.enabled && Number(booking.discount.amount || 0) > 0) {
+      const discNote = booking.discount.reason ? ` (${booking.discount.reason})` : '';
+      items.push(`
+        <li style="border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 6px;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <strong style="color: #10B981;"><i class="fa-solid fa-tags"></i> Special Studio Discount${discNote}</strong>
+            <span style="color: #10B981; font-weight: 700;">-${formatLKR(booking.discount.amount)} LKR</span>
+          </div>
+        </li>
+      `);
+    }
+
     if (items.length === 0) {
       sList.innerHTML = `<li style="color: var(--text-muted); font-size: 12px;">කිසිදු සේවාවක් තෝරාගෙන නැත (No services selected)</li>`;
     } else {
@@ -2388,13 +2465,27 @@ function recalculateBookingFinancials(booking) {
   if (booking.basePackageTotal === undefined || booking.basePackageTotal === null) {
     const existingTravel = (booking.travelCharges && booking.travelCharges.enabled) ? (booking.travelCharges.totalTravelCost || 0) : 0;
     const existingExpress = booking.expressDeliveryAccepted ? (booking.expressDeliveryFee || 0) : 0;
-    booking.basePackageTotal = Math.max(0, (booking.totalAmount || 0) - existingTravel - existingExpress);
+    const existingDiscount = (booking.discount && booking.discount.enabled) ? (Number(booking.discount.amount) || 0) : 0;
+    booking.basePackageTotal = Math.max(0, (booking.totalAmount || 0) - existingTravel - existingExpress + existingDiscount);
   }
 
   const travelCost = (booking.travelCharges && booking.travelCharges.enabled) ? (booking.travelCharges.totalTravelCost || 0) : 0;
   const expressCost = booking.expressDeliveryAccepted ? (booking.expressDeliveryFee || 0) : 0;
   
-  booking.totalAmount = booking.basePackageTotal + travelCost + expressCost;
+  // Calculate discount
+  let discountDeduction = 0;
+  if (booking.discount && booking.discount.enabled) {
+    if (booking.discount.type === 'percentage') {
+      const pct = Math.min(100, Math.max(0, Number(booking.discount.value || 0)));
+      discountDeduction = Math.round((booking.basePackageTotal * pct) / 100);
+    } else {
+      discountDeduction = Number(booking.discount.value || booking.discount.amount || 0);
+    }
+    booking.discount.amount = discountDeduction;
+  }
+  
+  const grossTotal = booking.basePackageTotal + travelCost + expressCost;
+  booking.totalAmount = Math.max(0, grossTotal - discountDeduction);
   
   if (booking.isFullPaid) {
     booking.balanceDue = 0;
@@ -2931,6 +3022,110 @@ function closeAdminTravelCharges() {
   saveDataToStorage(booking);
   loadAdminData();
   showToast("Travel Charges Closed", "Travel charges removed from booking.");
+}
+
+// Special Studio Discount Functions
+function toggleAdminDiscount(val) {
+  const container = document.getElementById("adminDiscountInputsContainer");
+  if (container) container.style.display = val ? "block" : "none";
+  if (!val) {
+    closeAdminDiscount();
+  }
+}
+
+function handleDiscountTypeChange() {
+  const type = document.getElementById("adminDiscountType")?.value || 'amount';
+  const label = document.getElementById("adminDiscountValueLabel");
+  const input = document.getElementById("adminDiscountValue");
+  if (label) {
+    label.textContent = type === 'percentage' ? "Discount Percentage (%)" : "Discount Amount (LKR)";
+  }
+  if (input) {
+    input.placeholder = type === 'percentage' ? "e.g. 10 (for 10%)" : "e.g. 10000";
+  }
+  calculateAdminDiscount();
+}
+
+function calculateAdminDiscount() {
+  const booking = getActiveBooking();
+  if (!booking) return 0;
+
+  const type = document.getElementById("adminDiscountType")?.value || 'amount';
+  const val = Number(document.getElementById("adminDiscountValue")?.value || 0);
+  const baseTotal = booking.basePackageTotal || booking.totalAmount || 0;
+
+  let deduction = 0;
+  if (type === 'percentage') {
+    const pct = Math.min(100, Math.max(0, val));
+    deduction = Math.round((baseTotal * pct) / 100);
+  } else {
+    deduction = Math.min(baseTotal, Math.max(0, val));
+  }
+
+  const textEl = document.getElementById("adminCalculatedDiscountText");
+  if (textEl) {
+    textEl.textContent = deduction > 0 ? `- ${formatLKR(deduction)} LKR` : "- 0 LKR";
+  }
+  return deduction;
+}
+
+function adminSaveDiscount() {
+  const booking = getActiveBooking();
+  if (!booking) return;
+
+  const type = document.getElementById("adminDiscountType")?.value || 'amount';
+  const val = Number(document.getElementById("adminDiscountValue")?.value || 0);
+  const reason = document.getElementById("adminDiscountReason")?.value.trim() || "";
+  const calculatedDeduction = calculateAdminDiscount();
+
+  if (calculatedDeduction <= 0) {
+    alert("කරුණාකර වලංගු Discount අගයක් ඇතුළත් කරන්න (Enter a valid discount amount or percentage).");
+    return;
+  }
+
+  booking.discount = {
+    enabled: true,
+    type: type,
+    value: val,
+    amount: calculatedDeduction,
+    reason: reason,
+    updatedAt: new Date().toISOString()
+  };
+
+  recalculateBookingFinancials(booking);
+  saveDataToStorage(booking);
+  loadAdminData();
+  showToast("Discount Applied!", `Special Studio Discount of -${formatLKR(calculatedDeduction)} LKR saved.`);
+}
+
+function closeAdminDiscount() {
+  const booking = getActiveBooking();
+  if (!booking) return;
+
+  booking.discount = {
+    enabled: false,
+    type: 'amount',
+    value: 0,
+    amount: 0,
+    reason: '',
+    updatedAt: new Date().toISOString()
+  };
+
+  const toggle = document.getElementById("adminDiscountToggle");
+  if (toggle) toggle.checked = false;
+  const container = document.getElementById("adminDiscountInputsContainer");
+  if (container) container.style.display = "none";
+  const valInput = document.getElementById("adminDiscountValue");
+  if (valInput) valInput.value = "";
+  const reasonInput = document.getElementById("adminDiscountReason");
+  if (reasonInput) reasonInput.value = "";
+  const textEl = document.getElementById("adminCalculatedDiscountText");
+  if (textEl) textEl.textContent = "- 0 LKR";
+
+  recalculateBookingFinancials(booking);
+  saveDataToStorage(booking);
+  loadAdminData();
+  showToast("Discount Removed", "Discount has been removed from this booking.");
 }
 
 function toggleAdminExpressDelivery(val) {
