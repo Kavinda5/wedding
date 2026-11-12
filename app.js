@@ -3176,9 +3176,63 @@ function rejectTerms() {
 
 function openEditDetailsModal() {
   const booking = getActiveBooking();
-  document.getElementById("editWeddingDate").value = booking.weddingDate;
-  document.getElementById("editPreshootDate").value = booking.preshootDate || "";
-  document.getElementById("editPreshootLocation").value = booking.preshootLocation || "";
+  if (!booking) return;
+
+  // 1. Wedding Package & Section
+  const wpSelect = document.getElementById("editWeddingPackage");
+  if (wpSelect) {
+    wpSelect.innerHTML = `<option value="">-- No Wedding Package --</option>` +
+      WEDDING_PACKAGES.map(p => `<option value="${p.id}" ${booking.selectedPackage?.id === p.id ? 'selected' : ''}>${p.name} (${formatLKR(p.price)} LKR)</option>`).join("");
+  }
+  document.getElementById("editWeddingDate").value = booking.weddingDate || "";
+  document.getElementById("editWeddingLocation").value = booking.weddingLocation || "";
+
+  // 2. Homecoming Section (Show only if booking has homecoming package or date)
+  const hcSection = document.getElementById("editHomecomingSection");
+  const hcSelect = document.getElementById("editHomecomingPackage");
+  if (hcSelect) {
+    hcSelect.innerHTML = `<option value="">-- No Homecoming --</option>` +
+      HOMECOMING_PACKAGES.map(p => `<option value="${p.id}" ${booking.selectedHomecoming?.id === p.id ? 'selected' : ''}>${p.name} (${formatLKR(p.price)} LKR)</option>`).join("");
+  }
+  if (booking.selectedHomecoming || booking.homecomingDate) {
+    hcSection?.classList.remove("hidden");
+    document.getElementById("editHomecomingDate").value = booking.homecomingDate || "";
+    document.getElementById("editHomecomingLocation").value = booking.homecomingLocation || "";
+  } else {
+    hcSection?.classList.add("hidden");
+  }
+
+  // 3. Pre-Shoot Section (Show only if booking has preshoot package or date)
+  const psSection = document.getElementById("editPreshootSection");
+  const psSelect = document.getElementById("editPreshootPackage");
+  if (psSelect) {
+    psSelect.innerHTML = `<option value="">-- No Pre-Shoot --</option>` +
+      PRESHOOT_PACKAGES.map(p => `<option value="${p.id}" ${booking.selectedPreshoot?.id === p.id ? 'selected' : ''}>${p.name} (${formatLKR(p.price)} LKR)</option>`).join("");
+  }
+  if (booking.selectedPreshoot || booking.preshootDate) {
+    psSection?.classList.remove("hidden");
+    document.getElementById("editPreshootDate").value = booking.preshootDate || "";
+    document.getElementById("editPreshootLocation").value = booking.preshootLocation || "";
+  } else {
+    psSection?.classList.add("hidden");
+  }
+
+  // 4. Engagement Section (Show only if booking has engagement package or date)
+  const engSection = document.getElementById("editEngagementSection");
+  const engSelect = document.getElementById("editEngagementPackage");
+  if (engSelect) {
+    engSelect.innerHTML = `<option value="">-- No Engagement --</option>` +
+      ENGAGEMENT_PACKAGES.map(p => `<option value="${p.id}" ${booking.selectedEngagement?.id === p.id ? 'selected' : ''}>${p.name} (${formatLKR(p.price)} LKR)</option>`).join("");
+  }
+  if (booking.selectedEngagement || booking.engagementDate) {
+    engSection?.classList.remove("hidden");
+    document.getElementById("editEngagementDate").value = booking.engagementDate || "";
+    document.getElementById("editEngagementLocation").value = booking.engagementLocation || "";
+  } else {
+    engSection?.classList.add("hidden");
+  }
+
+  document.getElementById("editChangeReason").value = "";
   document.getElementById("editDetailsModal")?.classList.remove("hidden");
 }
 
@@ -3188,24 +3242,137 @@ function closeEditDetailsModal() {
 
 function saveClientChanges() {
   const booking = getActiveBooking();
+  if (!booking) return;
+
   const oldDate = booking.weddingDate;
+  const oldLocation = booking.weddingLocation;
+  const oldPackageName = booking.selectedPackage?.name || "None";
+  const oldHomecomingPkgName = booking.selectedHomecoming?.name || "None";
+  const oldPreshootPkgName = booking.selectedPreshoot?.name || "None";
+  const oldEngagementPkgName = booking.selectedEngagement?.name || "None";
+  const oldHomecomingDate = booking.homecomingDate;
+  const oldHomecomingLocation = booking.homecomingLocation;
+  const oldPreshootDate = booking.preshootDate;
+  const oldPreshootLocation = booking.preshootLocation;
+  const oldEngagementDate = booking.engagementDate;
+  const oldEngagementLocation = booking.engagementLocation;
+
+  // 1. Update Wedding
+  const newWpId = document.getElementById("editWeddingPackage")?.value;
+  if (newWpId) {
+    const foundWp = WEDDING_PACKAGES.find(p => p.id === newWpId);
+    if (foundWp) booking.selectedPackage = { id: foundWp.id, name: foundWp.name, price: foundWp.price };
+  } else {
+    booking.selectedPackage = null;
+  }
   booking.weddingDate = document.getElementById("editWeddingDate").value;
-  booking.preshootDate = document.getElementById("editPreshootDate").value;
-  booking.preshootLocation = document.getElementById("editPreshootLocation").value.trim();
+  booking.weddingLocation = document.getElementById("editWeddingLocation").value.trim();
+
+  // 2. Update Homecoming (if section was active)
+  const hcSection = document.getElementById("editHomecomingSection");
+  if (hcSection && !hcSection.classList.contains("hidden")) {
+    const newHcId = document.getElementById("editHomecomingPackage")?.value;
+    if (newHcId) {
+      const foundHc = HOMECOMING_PACKAGES.find(p => p.id === newHcId);
+      if (foundHc) booking.selectedHomecoming = { id: foundHc.id, name: foundHc.name, price: foundHc.price };
+    } else {
+      booking.selectedHomecoming = null;
+    }
+    booking.homecomingDate = document.getElementById("editHomecomingDate").value;
+    booking.homecomingLocation = document.getElementById("editHomecomingLocation").value.trim();
+  }
+
+  // 3. Update Pre-Shoot (if section was active)
+  const psSection = document.getElementById("editPreshootSection");
+  if (psSection && !psSection.classList.contains("hidden")) {
+    const newPsId = document.getElementById("editPreshootPackage")?.value;
+    if (newPsId) {
+      const foundPs = PRESHOOT_PACKAGES.find(p => p.id === newPsId);
+      if (foundPs) booking.selectedPreshoot = { id: foundPs.id, name: foundPs.name, price: foundPs.price };
+    } else {
+      booking.selectedPreshoot = null;
+    }
+    booking.preshootDate = document.getElementById("editPreshootDate").value;
+    booking.preshootLocation = document.getElementById("editPreshootLocation").value.trim();
+  }
+
+  // 4. Update Engagement (if section was active)
+  const engSection = document.getElementById("editEngagementSection");
+  if (engSection && !engSection.classList.contains("hidden")) {
+    const newEngId = document.getElementById("editEngagementPackage")?.value;
+    if (newEngId) {
+      const foundEng = ENGAGEMENT_PACKAGES.find(p => p.id === newEngId);
+      if (foundEng) booking.selectedEngagement = { id: foundEng.id, name: foundEng.name, price: foundEng.price };
+    } else {
+      booking.selectedEngagement = null;
+    }
+    booking.engagementDate = document.getElementById("editEngagementDate").value;
+    booking.engagementLocation = document.getElementById("editEngagementLocation").value.trim();
+  }
+
   const reason = document.getElementById("editChangeReason").value.trim();
+
+  // Recalculate Total and Balance
+  if (typeof recalculateBookingFinancials === 'function') {
+    recalculateBookingFinancials(booking);
+  } else {
+    let newTotal = 0;
+    if (booking.customPackageItems?.length > 0) {
+      booking.customPackageItems.forEach(cp => newTotal += Number(cp.price || 0));
+    } else if (booking.selectedPackage) {
+      newTotal += Number(booking.selectedPackage.price || 0);
+    }
+    if (booking.selectedHomecoming) newTotal += Number(booking.selectedHomecoming.price || 0);
+    if (booking.selectedEngagement) newTotal += Number(booking.selectedEngagement.price || 0);
+    if (booking.selectedPreshoot) newTotal += Number(booking.selectedPreshoot.price || 0);
+    booking.selectedAddons?.forEach(a => newTotal += Number(a.price || 0));
+    if (booking.expressDeliveryAccepted) {
+      const isVip = booking.selectedPackage?.id === "pkg_03" || booking.selectedPackage?.id === "pkg_vip";
+      newTotal += isVip ? 15000 : 10000;
+    }
+    if (booking.travelCharges?.enabled) {
+      newTotal += Number(booking.travelCharges.totalTravelCost || 0);
+    }
+    booking.totalAmount = newTotal;
+    const paidSoFar = Number(booking.advancePaid || 0) + Number(booking.balanceSlipPaid || 0);
+    booking.balanceDue = Math.max(0, newTotal - paidSoFar);
+  }
 
   saveDataToStorage();
   closeEditDetailsModal();
   loadPortalData(booking.id);
-  showToast("Dates Updated", "Changes saved & studio notified.");
+  showToast("Details Updated", "Changes saved & studio notified.");
+
+  // Build change summary for WhatsApp
+  let changes = [];
+  const curPkgName = booking.selectedPackage?.name || "None";
+  if (oldPackageName !== curPkgName) changes.push(`Wedding Package: ${oldPackageName} → ${curPkgName}`);
+  if (oldDate !== booking.weddingDate) changes.push(`Wedding Date: ${oldDate} → ${booking.weddingDate}`);
+  if (oldLocation !== booking.weddingLocation) changes.push(`Wedding Venue: ${oldLocation || 'N/A'} → ${booking.weddingLocation || 'N/A'}`);
+
+  const curHcName = booking.selectedHomecoming?.name || "None";
+  if (oldHomecomingPkgName !== curHcName) changes.push(`Homecoming Pkg: ${oldHomecomingPkgName} → ${curHcName}`);
+  if (oldHomecomingDate !== booking.homecomingDate) changes.push(`Homecoming Date: ${oldHomecomingDate || 'N/A'} → ${booking.homecomingDate || 'N/A'}`);
+  if (oldHomecomingLocation !== booking.homecomingLocation) changes.push(`Homecoming Venue: ${oldHomecomingLocation || 'N/A'} → ${booking.homecomingLocation || 'N/A'}`);
+
+  const curPsName = booking.selectedPreshoot?.name || "None";
+  if (oldPreshootPkgName !== curPsName) changes.push(`Pre-Shoot Pkg: ${oldPreshootPkgName} → ${curPsName}`);
+  if (oldPreshootDate !== booking.preshootDate) changes.push(`Pre-Shoot Date: ${oldPreshootDate || 'N/A'} → ${booking.preshootDate || 'N/A'}`);
+  if (oldPreshootLocation !== booking.preshootLocation) changes.push(`Pre-Shoot Location: ${oldPreshootLocation || 'N/A'} → ${booking.preshootLocation || 'N/A'}`);
+
+  const curEngName = booking.selectedEngagement?.name || "None";
+  if (oldEngagementPkgName !== curEngName) changes.push(`Engagement Pkg: ${oldEngagementPkgName} → ${curEngName}`);
+  if (oldEngagementDate !== booking.engagementDate) changes.push(`Engagement Date: ${oldEngagementDate || 'N/A'} → ${booking.engagementDate || 'N/A'}`);
+  if (oldEngagementLocation !== booking.engagementLocation) changes.push(`Engagement Venue: ${oldEngagementLocation || 'N/A'} → ${booking.engagementLocation || 'N/A'}`);
+
+  changes.push(`Updated Total Package: ${formatLKR(booking.totalAmount)} LKR`);
+  changes.push(`Balance Due: ${formatLKR(booking.balanceDue)} LKR`);
 
   sendCleanWhatsAppMessage(
     "0714277276",
-    `⚠️ *Client Changed Booking Dates!*
+    `⚠️ *Client Updated Package & Details!*
 Couple: ${booking.coupleTitle} (ID: ${booking.id})
-Old Wedding Date: ${oldDate}
-New Wedding Date: ${booking.weddingDate}
-Pre-Shoot Date: ${booking.preshootDate || 'N/A'}
+${changes.join('\n')}
 Reason: ${reason || 'Updated on portal'}`
   );
 }

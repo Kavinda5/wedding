@@ -810,22 +810,79 @@
         <button class="modal-close" onclick="closeEditDetailsModal()">&times;</button>
       </div>
       <div class="modal-body">
-        <p class="small-text">ඔබ දිනයක් හෝ පැකේජයක් වෙනස් කළ විට ස්වයංක්‍රීයව Dasun Kavinda වෙත WhatsApp Notification එකක් යවනු ලැබේ.</p>
+        <p class="small-text">ඔබ දිනයක්, ස්ථානයක් හෝ පැකේජයක් වෙනස් කළ විට ස්වයංක්‍රීයව Dasun Kavinda වෙත WhatsApp Notification එකක් යවනු ලැබේ.</p>
+
+        <!-- Wedding Section (Always shown) -->
+        <div style="border-left: 3px solid var(--gold); padding-left: 12px; margin-top: 14px;">
+          <h4 style="font-size: 13px; color: var(--gold); margin: 0 0 8px;">🎬 Wedding Day</h4>
+          <div class="form-group">
+            <label>Wedding Package</label>
+            <select id="editWeddingPackage" class="form-select-dark"></select>
+          </div>
+          <div class="form-group mt-2">
+            <label>Wedding Date</label>
+            <input type="date" id="editWeddingDate">
+          </div>
+          <div class="form-group mt-2">
+            <label>Wedding Location / Venue</label>
+            <input type="text" id="editWeddingLocation" placeholder="e.g. Kingsbury, Colombo">
+          </div>
+        </div>
+
+        <!-- Homecoming Section (Only if booking has homecoming) -->
+        <div id="editHomecomingSection" class="hidden" style="border-left: 3px solid #60A5FA; padding-left: 12px; margin-top: 14px;">
+          <h4 style="font-size: 13px; color: #60A5FA; margin: 0 0 8px;">🏠 Homecoming</h4>
+          <div class="form-group">
+            <label>Homecoming Package</label>
+            <select id="editHomecomingPackage" class="form-select-dark"></select>
+          </div>
+          <div class="form-group mt-2">
+            <label>Homecoming Date</label>
+            <input type="date" id="editHomecomingDate">
+          </div>
+          <div class="form-group mt-2">
+            <label>Homecoming Location / Venue</label>
+            <input type="text" id="editHomecomingLocation" placeholder="e.g. Home / Hall">
+          </div>
+        </div>
+
+        <!-- Pre-Shoot Section (Only if booking has preshoot) -->
+        <div id="editPreshootSection" class="hidden" style="border-left: 3px solid #A78BFA; padding-left: 12px; margin-top: 14px;">
+          <h4 style="font-size: 13px; color: #A78BFA; margin: 0 0 8px;">📷 Pre-Shoot</h4>
+          <div class="form-group">
+            <label>Pre-Shoot Package</label>
+            <select id="editPreshootPackage" class="form-select-dark"></select>
+          </div>
+          <div class="form-group mt-2">
+            <label>Pre-Shoot Date</label>
+            <input type="date" id="editPreshootDate">
+          </div>
+          <div class="form-group mt-2">
+            <label>Pre-Shoot Location</label>
+            <input type="text" id="editPreshootLocation">
+          </div>
+        </div>
+
+        <!-- Engagement Section (Only if booking has engagement) -->
+        <div id="editEngagementSection" class="hidden" style="border-left: 3px solid #F472B6; padding-left: 12px; margin-top: 14px;">
+          <h4 style="font-size: 13px; color: #F472B6; margin: 0 0 8px;">💍 Engagement</h4>
+          <div class="form-group">
+            <label>Engagement Package</label>
+            <select id="editEngagementPackage" class="form-select-dark"></select>
+          </div>
+          <div class="form-group mt-2">
+            <label>Engagement Date</label>
+            <input type="date" id="editEngagementDate">
+          </div>
+          <div class="form-group mt-2">
+            <label>Engagement Location / Venue</label>
+            <input type="text" id="editEngagementLocation" placeholder="e.g. Hall / Home">
+          </div>
+        </div>
+
         <div class="form-group mt-3">
-          <label>Wedding Date</label>
-          <input type="date" id="editWeddingDate">
-        </div>
-        <div class="form-group mt-2">
-          <label>Pre-Shoot Date</label>
-          <input type="date" id="editPreshootDate">
-        </div>
-        <div class="form-group mt-2">
-          <label>Pre-Shoot Location</label>
-          <input type="text" id="editPreshootLocation">
-        </div>
-        <div class="form-group mt-2">
           <label>Reason for change / Notes</label>
-          <textarea id="editChangeReason" rows="2" placeholder="දිනය වෙනස් කිරීමට හේතුව..."></textarea>
+          <textarea id="editChangeReason" rows="2" placeholder="වෙනස් කිරීමට හේතුව..."></textarea>
         </div>
       </div>
       <div class="modal-footer">

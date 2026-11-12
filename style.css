@@ -661,6 +661,7 @@ input[type="text"],
 input[type="date"],
 input[type="tel"],
 input[type="number"],
+select,
 textarea {
   background: var(--bg-surface);
   border: 1px solid var(--border);
@@ -673,7 +674,12 @@ textarea {
   transition: var(--transition);
 }
 
-input:focus, textarea:focus {
+select option {
+  background: #181A24;
+  color: #fff;
+}
+
+input:focus, textarea:focus, select:focus {
   border-color: var(--gold);
   box-shadow: 0 0 16px var(--gold-glow);
 }
